@@ -1,3 +1,5 @@
+import { hideSuggestions } from "../modules/mentions";
+
 /**
  * Handle click events on suggestion items
  * @param {Event} e Click event

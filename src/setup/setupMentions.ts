@@ -1,5 +1,6 @@
 import { handleInput } from "../handler/handleInput";
 import { handleKeyDownGlobal } from "../handler/handleKeyDown";
+import { setupInputListener } from "../modules/mentions";
 
 /**
  * Initialize the mentions system by setting up event listeners
@@ -14,7 +15,7 @@ export function setupMentions() {
   // Add event listeners for handling mentions
   document.addEventListener('input', handleInput);
   document.addEventListener('keydown', handleKeyDownGlobal, true);
-  document.addEventListener('click', handleGlobalClick, true);
+  // document.addEventListener('click', handleGlobalClick, true);
 
   setupInputListener();
 }
