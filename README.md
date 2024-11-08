@@ -4,6 +4,8 @@
 
 WWSNB est une extension Firefox qui améliore l'expérience de BigBlueButton pour les cours à distance de l'école O'Clock en ajoutant des fonctionnalités essentielles pour une meilleure communication.
 
+![BBB Oclock Extension](https://github.com/user-attachments/assets/ffc63b95-eb5a-456d-ac24-a71c7ce06824)
+
 ## 🌟 Fonctionnalités
 
 ### 🎯 Questions
