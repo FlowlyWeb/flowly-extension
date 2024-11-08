@@ -9,7 +9,7 @@ const availableReactions = [
 ];
 
 // Helper function to safely create text node
-function createSafeTextNode(text) {
+function createSafeTextNode(text :string) {
     return document.createTextNode(text);
 }
 
@@ -39,13 +39,13 @@ function setupReactions() {
     const messagesObserver = new MutationObserver((mutations) => {
         let shouldCheckMessages = false;
 
-        mutations.forEach((mutation) => {
+        for (const mutation of mutations) {
             if (mutation.type === 'childList' ||
                 mutation.type === 'characterData' ||
                 (mutation.type === 'attributes' && mutation.attributeName === 'style')) {
                 shouldCheckMessages = true;
             }
-        });
+        }
 
         if (shouldCheckMessages) {
             setTimeout(checkAndAddReactionButtons, 100);
@@ -70,9 +70,7 @@ function setupReactions() {
     }
 
     // Observe body for structure changes
-    messagesObserver.observe(document.body, {
-        childList: true,
-        subtree: true
+    messagesObserver.observe(document.body, config);
     });
 
     // Set up periodic check for new messages
