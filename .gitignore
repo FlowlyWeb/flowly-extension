@@ -372,3 +372,6 @@ $RECYCLE.BIN/
 web-ext-artifacts/
 .amo-upload-uuid
 .web-extension-id
+
+#Personnal VScode settings
+.vscode
