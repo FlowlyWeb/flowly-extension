@@ -6,11 +6,11 @@ function setupModerator() {
 
     // Create observer for new messages
     const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
+        for (const mutation of mutations) {
             if (mutation.addedNodes.length) {
                 checkModeratorMessages();
             }
-        });
+        }
     });
 
     // Start observing document for changes
@@ -28,12 +28,12 @@ function setupModerator() {
  */
 function checkModeratorMessages() {
     // Target all message containers
-    const messages = document.querySelectorAll('.sc-leYdVB');
+    const messages = document.querySelectorAll('.sc-leYdVB') as unknown as HTMLElement[];
 
-    messages.forEach(messageContainer => {
+    for (const messageContainer of messages) {
         // Skip already processed messages
         if (messageContainer.hasAttribute('moderator-checked')) {
-            return;
+            continue;
         }
         messageContainer.setAttribute('moderator-checked', 'true');
 
@@ -53,7 +53,7 @@ function checkModeratorMessages() {
                 username.appendChild(badge);
             }
         }
-    });
+    }
 }
 
 // Initialize module

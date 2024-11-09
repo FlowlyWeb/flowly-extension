@@ -9,15 +9,15 @@ const availableReactions = [
 ];
 
 // Helper function to safely create text node
-function createSafeTextNode(text) {
+function createSafeTextNode(text :string) {
     return document.createTextNode(text);
 }
 
 // Helper function to safely create emoji element
-function createEmojiElement(emoji, count) {
+function createEmojiElement(emoji:string, count:string) {
     const span = document.createElement('span');
     span.appendChild(createSafeTextNode(emoji));
-    span.appendChild(createSafeTextNode(' ' + count));
+    span.appendChild(createSafeTextNode(` ${count}`));
     return span;
 }
 
@@ -39,13 +39,13 @@ function setupReactions() {
     const messagesObserver = new MutationObserver((mutations) => {
         let shouldCheckMessages = false;
 
-        mutations.forEach((mutation) => {
+        for (const mutation of mutations) {
             if (mutation.type === 'childList' ||
                 mutation.type === 'characterData' ||
                 (mutation.type === 'attributes' && mutation.attributeName === 'style')) {
                 shouldCheckMessages = true;
             }
-        });
+        }
 
         if (shouldCheckMessages) {
             setTimeout(checkAndAddReactionButtons, 100);
@@ -56,10 +56,7 @@ function setupReactions() {
     const virtualizedGrid = document.querySelector('.ReactVirtualized__Grid__innerScrollContainer');
     const chatContainer = document.querySelector('[data-test="conversation-turns-container"]');
     const virtualGrid = document.querySelector('.ReactVirtualized__Grid');
-
-    if (virtualizedGrid) {
-        messagesObserver.observe(virtualizedGrid, config);
-    }
+    virtualizedGrid && messagesObserver.observe(virtualizedGrid, config);
 
     if (chatContainer) {
         messagesObserver.observe(chatContainer, config);
@@ -89,12 +86,13 @@ function setupReactions() {
  * Add reaction buttons to new messages
  */
 function checkAndAddReactionButtons() {
-    const containers = document.querySelectorAll('.sc-leYdVB');
-    containers.forEach(messageContainer => {
-        if (!messageContainer.dataset.hasReactions) {
-            addReactionButton(messageContainer);
+    const containers = document.querySelectorAll('.sc-leYdVB') as unknown as HTMLElement[];
+    for (const messageContainer of containers) {
+        const container = messageContainer as HTMLElement;
+        if (!container.dataset.hasReactions) {
+            addReactionButton(container);
         }
-    });
+    }
 }
 
 /**
@@ -102,7 +100,7 @@ function checkAndAddReactionButtons() {
  * @param {HTMLElement} messageContainer The message container element
  * @returns {string} A unique message ID
  */
-function generateMessageId(messageContainer) {
+function generateMessageId(messageContainer: HTMLElement) {
     // Get message text
     const messageText = messageContainer.querySelector('[data-test="chatUserMessageText"]')?.textContent || '';
 
@@ -138,7 +136,7 @@ function getSessionToken() {
  * Initialize reactions system for current session
  * @param {string} sessionToken Current session token
  */
-function initializeReactions(sessionToken) {
+function initializeReactions(sessionToken: string) {
     const channelId = `wwsnb_reactions_${sessionToken}`;
 
     if (reactionChannel) {
@@ -155,7 +153,7 @@ function initializeReactions(sessionToken) {
  * Handle reaction updates from broadcast channel
  * @param {MessageEvent} event Broadcast channel message event
  */
-function handleReactionUpdate(event) {
+function handleReactionUpdate(event: MessageEvent) {
     if (event.data.type === 'update_reactions') {
         try {
             const parsedReactions = JSON.parse(event.data.reactions);
@@ -186,18 +184,21 @@ function saveReactionsToStorage() {
         );
 
         const cleanedReactions = new Map();
-        messageReactions.forEach((reactions, messageId) => {
+        for (const [messageId, reactions] of messageReactions) {
             if (existingMessageIds.has(messageId)) {
-                cleanedReactions.set(messageId, reactions);
+            cleanedReactions.set(messageId, reactions);
             }
-        });
+        }
 
         messageReactions = cleanedReactions;
 
         // Convert and save
-        const reactionsObj = {};
+        const reactionsObj: { [key: string]: any } = {};
         messageReactions.forEach((reactions, messageId) => {
-            reactionsObj[messageId] = Object.fromEntries(reactions);
+            for (const [emoji, users] of reactions) {
+                reactionsObj[messageId] = reactionsObj[messageId] || {};
+                reactionsObj[messageId][emoji] = users;
+            }
         });
 
         const storageKey = `wwsnb_reactions_${sessionToken}`;
@@ -219,7 +220,7 @@ function saveReactionsToStorage() {
  * Load reactions from localStorage
  * @param {string} sessionToken Current session token
  */
-function loadReactionsFromStorage(sessionToken) {
+function loadReactionsFromStorage(sessionToken: string) {
     try {
         const storageKey = `wwsnb_reactions_${sessionToken}`;
         const saved = localStorage.getItem(storageKey);
@@ -228,13 +229,13 @@ function loadReactionsFromStorage(sessionToken) {
             const reactionsObj = JSON.parse(saved);
             messageReactions = new Map();
 
-            Object.entries(reactionsObj).forEach(([messageId, reactions]) => {
-                const messageReactionMap = new Map();
-                Object.entries(reactions).forEach(([emoji, users]) => {
+            for (const [messageId, reactions] of Object.entries(reactionsObj)) {
+                const messageReactionMap = new Map<string, string[]>();
+                for (const [emoji, users] of Object.entries(reactions as { [key: string]: string[] })) {
                     messageReactionMap.set(emoji, Array.isArray(users) ? users : []);
-                });
+                }
                 messageReactions.set(messageId, messageReactionMap);
-            });
+            };
         } else {
             messageReactions = new Map();
         }
@@ -250,11 +251,11 @@ function loadReactionsFromStorage(sessionToken) {
  * Update all reaction displays in the UI
  */
 function updateAllReactionDisplays() {
-    const containers = document.querySelectorAll('.sc-leYdVB');
+    const containers = document.querySelectorAll('.sc-leYdVB') as unknown as HTMLElement[];
 
-    containers.forEach(messageContainer => {
-        const messageId = messageContainer.dataset.messageId || generateMessageId(messageContainer);
-        messageContainer.dataset.messageId = messageId;
+    for (const messageContainer of containers) {
+        const messageId = (messageContainer as HTMLElement).dataset.messageId || generateMessageId(messageContainer);
+        (messageContainer as HTMLElement).dataset.messageId = messageId;
 
         if (messageReactions.has(messageId)) {
             let reactionsContainer = messageContainer.querySelector('.reactions-container');
@@ -265,9 +266,9 @@ function updateAllReactionDisplays() {
             }
 
             updateReactionDisplay(messageId, reactionsContainer);
-            messageContainer.dataset.hasReactions = 'true';
+            (messageContainer as HTMLElement).dataset.hasReactions = 'true';
         }
-    });
+    };
 }
 
 /**
@@ -275,7 +276,7 @@ function updateAllReactionDisplays() {
  * @param {string} messageId Message ID
  * @param {string} emoji Reaction emoji
  */
-function addReaction(messageId, emoji) {
+function addReaction(messageId:string, emoji: string ) {
     const reactions = messageReactions.get(messageId) || new Map();
     const userName = getActualUserName();
 
@@ -298,7 +299,7 @@ function addReaction(messageId, emoji) {
     // Immediately update the display for this specific message
     const messageContainer = document.querySelector(`[data-message-id="${messageId}"]`);
     if (messageContainer) {
-        const reactionsContainer = messageContainer.querySelector('.reactions-container');
+        const reactionsContainer = messageContainer.querySelector('.reactions-container') as HTMLElement;
         if (reactionsContainer) {
             updateReactionDisplay(messageId, reactionsContainer);
         }
@@ -313,7 +314,7 @@ function addReaction(messageId, emoji) {
  * @param {string} messageId Message ID
  * @param {HTMLElement} container Reactions container element
  */
-function updateReactionDisplay(messageId, container) {
+function updateReactionDisplay(messageId: string, container: HTMLElement) {
     // Clear existing content safely
     while (container.firstChild) {
         container.removeChild(container.firstChild);
@@ -322,7 +323,7 @@ function updateReactionDisplay(messageId, container) {
     const reactions = messageReactions.get(messageId) || new Map();
     const userName = getActualUserName();
 
-    reactions.forEach((users, emoji) => {
+    for (const [emoji, users] of reactions) {
         const badge = document.createElement('div');
         badge.className = 'reaction-badge';
 
@@ -330,19 +331,19 @@ function updateReactionDisplay(messageId, container) {
             badge.style.backgroundColor = '#bbdefb';
         }
 
-        const emojiElement = createEmojiElement(emoji, users.length);
+        const emojiElement = createEmojiElement(emoji, users.length.toString());
         badge.appendChild(emojiElement);
         badge.setAttribute('title', users.join(', '));
         badge.addEventListener('click', () => addReaction(messageId, emoji));
         container.appendChild(badge);
-    });
+    }
 }
 
 /**
  * Add reaction button to a message container
  * @param {HTMLElement} messageContainer The message container element
  */
-function addReactionButton(messageContainer) {
+function addReactionButton(messageContainer: HTMLElement) {
     if (messageContainer.dataset.hasReactions === 'true') {
         return;
     }
@@ -389,19 +390,17 @@ function addReactionButton(messageContainer) {
  * @param {string} messageId The ID of the message
  * @param {HTMLElement} buttonElement The button that triggered the picker
  */
-function showReactionPicker(messageId, buttonElement) {
+function showReactionPicker(messageId: string, buttonElement: HTMLElement) {
     // Remove any existing picker
     const existingPicker = document.querySelector('.reaction-picker');
-    if (existingPicker) {
-        existingPicker.remove();
-    }
+    existingPicker?.remove();
 
     // Create new picker
     const picker = document.createElement('div');
     picker.className = 'reaction-picker';
 
     // Add available reactions
-    availableReactions.forEach(emoji => {
+    for (const emoji of availableReactions) {
         const button = document.createElement('button');
         button.appendChild(createSafeTextNode(emoji));
         button.addEventListener('click', () => {
@@ -409,7 +408,7 @@ function showReactionPicker(messageId, buttonElement) {
             picker.remove();
         });
         picker.appendChild(button);
-    });
+    }
 
     // Position picker relative to button
     const rect = buttonElement.getBoundingClientRect();

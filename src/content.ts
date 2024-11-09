@@ -6,11 +6,11 @@ function launchWWSNB() {
 
     // Create observer for new messages
     const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
+        for (const mutation of mutations) {
             if (mutation.addedNodes.length) {
                 checkNewMessages();
             }
-        });
+        }
     });
 
     // Configure observer settings
@@ -26,23 +26,20 @@ function launchWWSNB() {
      * Check new messages for questions and mentions
      */
     function checkNewMessages() {
-        const messages = document.querySelectorAll('[data-test="chatUserMessageText"]');
+        const messages = document.querySelectorAll('[data-test="chatUserMessageText"]') as unknown as HTMLDivElement[];
         const actualUserName = getActualUserName();
 
-        messages.forEach(message => {
-            // Check for questions
-            if (message.textContent.includes('@question')) {
+        for (const message of messages) {
+            const textContent = message.textContent;
+            if (textContent?.includes('@question')) {
                 const messageContainer = message.closest('.sc-leYdVB');
-                if (messageContainer && !messageContainer.classList.contains('question-highlight')) {
-                    messageContainer.classList.add('question-highlight');
-                }
-            } else if (message.textContent.includes('@' + actualUserName)) {
+                messageContainer && !messageContainer.classList.contains('question-highlight') && messageContainer.classList.add('question-highlight')
+            } 
+            if (textContent?.includes(`@${actualUserName}`)) {
                 const messageContainer = message.closest('.sc-leYdVB');
-                if (messageContainer && !messageContainer.classList.contains('mention-highlight')) {
-                    messageContainer.classList.add('mention-highlight');
-                }
+                messageContainer && !messageContainer.classList.contains('mention-highlight') && messageContainer.classList.add('mention-highlight')
             }
-        });
+        }
     }
 
     // Initialize all modules with a slight delay to ensure DOM is ready

@@ -111,7 +111,7 @@ function handleGlobalClick(e) {
  * Handle keyboard events for navigation and selection
  * @param {KeyboardEvent} e Keyboard event
  */
-function handleKeyDownGlobal(e) {
+function handleKeyDownGlobal(e: KeyboardEvent) {
     if (!suggestionsBox) {
         return;
     }
@@ -144,7 +144,7 @@ function handleKeyDownGlobal(e) {
  * Handle input changes and trigger suggestions display
  * @param {Event} e Input event
  */
-function handleInput(e) {
+function handleInput(e: Event) {
     if (e.target.id !== 'message-input') {
         return;
     }
@@ -180,7 +180,7 @@ function handleInput(e) {
  * @param {HTMLElement} inputElement Input element
  * @param {number} atIndex Position of @
  */
-async function searchAndShowSuggestions(query, inputElement, atIndex) {
+async function searchAndShowSuggestions(query: string, inputElement: HTMLElement, atIndex: number) {
     try {
         const users = await getCachedUsers();
         const matches = users.filter(user =>
@@ -204,7 +204,7 @@ async function searchAndShowSuggestions(query, inputElement, atIndex) {
  * @param {HTMLElement} inputElement Input element
  * @param {number} atIndex Position of @
  */
-function showSuggestions(users, inputElement, atIndex) {
+function showSuggestions(users: [], inputElement: HTMLElement, atIndex: number) {
     hideSuggestions();
 
     suggestionsBox = document.createElement('div');
@@ -279,7 +279,7 @@ function hideSuggestions() {
  * Navigate through suggestions using keyboard
  * @param {number} direction 1 for down, -1 for up
  */
-function navigateSuggestions(direction) {
+function navigateSuggestions(direction: number) {
     const items = suggestionsBox.querySelectorAll('.mention-suggestion-item');
     const currentIndex = Array.from(items).findIndex(item => item.classList.contains('selected'));
     items[currentIndex].classList.remove('selected');
@@ -300,7 +300,7 @@ function navigateSuggestions(direction) {
  * Select a suggestion and insert it into the input
  * @param {HTMLElement} item Selected suggestion item
  */
-function selectSuggestion(item) {
+function selectSuggestion(item: HTMLElement) {
     if (!currentInput || !item) {
         return;
     }
