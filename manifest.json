@@ -17,14 +17,9 @@
     {
       "matches": ["*://*.oclock.school/*"],
       "js": [
-        "dist/utils/userUtils.js",
-        "dist/modules/questions.js",
-        "dist/modules/mentions.js",
-        "dist/modules/reactions.js",
-        "dist/modules/moderator.js",
-        "dist/content.js"
+        "dist**/*.js"
       ],
-      "css": ["src/styles/styles.css"]
+      "css": ["src/**/*.css"]
     }
   ]
 }
