@@ -24,7 +24,6 @@ const app = {
         checkNewMessages();
         setupMentions();
         setupReactions();
-        setupModerator();
         console.log('[WWSNB] Modules initialized successfully');
     }, 1000);
 
