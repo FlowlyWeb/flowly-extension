@@ -40,21 +40,24 @@ function checkModeratorMessages() {
         // Look for moderator avatar
         const moderatorAvatar = messageContainer.querySelector('[data-test="moderatorAvatar"]');
 
-        if (moderatorAvatar) {
-            // Add special styling class
-            messageContainer.classList.add('moderator-message');
-
-            // Add MOD badge
-            const username = messageContainer.querySelector('.sc-lmONJn span');
-            if (username && !username.querySelector('.moderator-badge')) {
-                const badge = document.createElement('span');
-                badge.className = 'moderator-badge';
-                badge.textContent = 'MOD';
-                username.appendChild(badge);
-            }
-        }
+        if (moderatorAvatar) addClassModerator(messageContainer);
+        
     }
 }
 
 // Initialize module
 setupModerator();
+
+export function addClassModerator(message: HTMLElement) {
+    // Add special styling class
+    message.classList.add('moderator-message');
+
+    // Add MOD badge
+    const username = message.querySelector('.sc-lmONJn span');
+    if (username && !username.querySelector('.moderator-badge')) {
+        const badge = document.createElement('span');
+        badge.className = 'moderator-badge';
+        badge.textContent = 'MOD';
+        username.appendChild(badge);
+    }
+}

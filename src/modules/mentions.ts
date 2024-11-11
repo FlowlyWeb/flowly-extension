@@ -1,9 +1,9 @@
+import { getCachedUsers } from "./users/user.module";
+
 // Global variables for mentions system
 let suggestionsBox = null;
 let currentInput = null;
-let cachedUsers = null;
 let lastCacheTime = 0;
-const CACHE_DURATION = 3000;
 
 // Global click handler to close suggestions box when clicking outside
 document.addEventListener('click', (e) => {
@@ -71,21 +71,6 @@ function setupInputListener() {
             };
         }
     }
-}
-
-/**
- * Get cached users or fetch new ones if cache is expired
- * @returns {Promise<Array>} Array of users
- */
-async function getCachedUsers() {
-    const now = Date.now();
-    if (cachedUsers == null || now - lastCacheTime > CACHE_DURATION) {
-        console.log('Fetching users...');
-        cachedUsers = await getAllUsers();
-        console.log('Users fetched:', cachedUsers);
-        lastCacheTime = now;
-    }
-    return cachedUsers;
 }
 
 /**
@@ -182,7 +167,7 @@ function handleInput(e: Event) {
  */
 async function searchAndShowSuggestions(query: string, inputElement: HTMLElement, atIndex: number) {
     try {
-        const users = await getCachedUsers();
+        const users = getCachedUsers();
         const matches = users.filter(user =>
             user.name.toLowerCase().startsWith(query.toLowerCase())
         );

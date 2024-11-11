@@ -1,3 +1,5 @@
+import { getActualUserName } from "./users/user.module";
+
 // Global variables for reactions system
 let messageReactions = new Map();
 let reactionChannel;
@@ -24,7 +26,7 @@ function createEmojiElement(emoji:string, count:string) {
 /**
  * Initialize the reactions system
  */
-function setupReactions() {
+export function setupReactions() {
     console.log('[WWSNB] Initializing message reactions module');
 
     // Configure mutation observer
