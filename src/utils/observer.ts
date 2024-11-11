@@ -1,7 +1,7 @@
-import { addClassMention } from "@/modules/mentions";
+import { addClassMention } from "@/modules/mentions/mention.module";
+import { getActualUserName } from "@/modules/users/user.module";
 import { addClassModerator } from "@/modules/moderator";
 import { addClassQuestion } from "@/modules/questions";
-import { getActualUserName } from "@/modules/users/user.module";
 
 export const observer = new MutationObserver((mutations) => {
   for (const mutation of mutations) {

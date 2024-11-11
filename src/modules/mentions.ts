@@ -18,7 +18,7 @@ document.addEventListener('click', (e) => {
 /**
  * Initialize the mentions system by setting up event listeners
  */
-function setupMentions() {
+export function setupMentions() {
     console.log('[WWSNB] Initializing user mentions module');
 
     // Remove any existing event listeners to prevent duplicates
