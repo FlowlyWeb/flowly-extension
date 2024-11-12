@@ -1,3 +1,4 @@
+import suggestionBoxElem from "../suggestion/suggestionbox.element";
 import { getActualUserName } from "../users/user.module";
 
 export function addClassMention(message: HTMLElement) {
@@ -7,8 +8,9 @@ export function addClassMention(message: HTMLElement) {
 }
 
 export function checkForMentions(message: HTMLElement, textContent: string | null) {
-    const actualUserName = getActualUserName();
-    if (textContent?.includes(`@${actualUserName}`)) {
-      addClassMention(message);
-    }
+  const actualUserName = getActualUserName();
+  if (textContent?.includes(`@${actualUserName}`)) {
+    addClassMention(message);
   }
+}
+
