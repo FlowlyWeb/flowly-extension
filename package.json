@@ -15,8 +15,21 @@
     "slippers"
   ],
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc -w",
+    "clean": "rimraf dist dist-scripts",
+    "build:ts": "tsc",
+    "build:scripts": "tsc -p scripts/tsconfig.json",
+    "copy-static": "copyfiles -u 1 \"src/**/*.{json,png,svg,html,css}\" dist",
+    "build": "npm run clean && npm run build:ts && npm run copy-static",
+    "release": "tsx scripts/release.ts",
+    "release:no-git": "tsx scripts/release.ts",
+    "release:patch": "tsx scripts/release.ts patch",
+    "release:patch:no-git": "tsx scripts/release.ts patch --no-git",
+    "release:patch:skip-build": "tsx scripts/release.ts patch --no-git --skip-build",
+    "release:minor": "tsx scripts/release.ts minor",
+    "release:minor:no-git": "tsx scripts/release.ts minor --no-git",
+    "release:major": "tsx scripts/release.ts major",
+    "release:major:no-git": "tsx scripts/release.ts major --no-git",
+    "upload-only": "tsx scripts/release.ts patch --no-git --skip-build --upload-only",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:check": "eslint . --max-warnings 0"
@@ -26,9 +39,19 @@
   "devDependencies": {
     "@eslint/js": "^9.15.0",
     "@types/firefox-webext-browser": "^120.0.4",
+    "@types/node": "^20.10.0",
+    "@types/node-fetch": "^2.6.9",
+    "copyfiles": "^2.4.1",
+    "dotenv": "^16.4.5",
     "eslint": "^9.15.0",
+    "form-data": "^4.0.0",
     "globals": "^15.12.0",
+    "node-fetch": "^3.3.2",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.7.1",
     "typescript": "^5.6.3",
-    "typescript-eslint": "^8.14.0"
+    "typescript-eslint": "^8.14.0",
+    "web-ext": "^7.8.0",
+    "zx": "^7.2.3"
   }
 }
