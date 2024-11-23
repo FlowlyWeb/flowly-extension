@@ -1,6 +1,6 @@
-import { setupMentions } from "./modules/mentions";
-import { setupReactions } from "./modules/reactions";
-import { checkNewMessages, observer } from "./utils/observer";
+import { setupMentions } from "./modules/mentions.js";
+//import { setupReactions } from "./modules/reactions.js";
+import { checkNewMessages, observer } from "./utils/observer.js";
 
 /**
  * Initialize all WWSNB modules
@@ -23,7 +23,7 @@ const app = {
         console.log('[WWSNB] Starting modules initialization');
         checkNewMessages();
         setupMentions();
-        setupReactions();
+        //setupReactions();
         console.log('[WWSNB] Modules initialized successfully');
     }, 1000);
 

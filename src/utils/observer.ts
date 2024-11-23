@@ -1,6 +1,6 @@
-import { checkForMentions } from "@/modules/mentions/mention.module";
-import { checkForModeratorMessages } from "@/modules/moderators/moderator.module";
-import { checkForQuestions } from "@/modules/question/question.module";
+import { checkForMentions } from "../modules/mentions/mention.module.js";
+import { checkForModeratorMessages } from "../modules/moderators/moderator.module.js";
+import { checkForQuestions } from "../modules/question/question.module.js";
 
 export const observer = new MutationObserver((mutations) => {
   for (const mutation of mutations) {

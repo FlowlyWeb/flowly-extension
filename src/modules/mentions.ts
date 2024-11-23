@@ -1,4 +1,4 @@
-import { handleGlobalClick, handleInput, handleKeyDownGlobal } from "./mentions/event.handler";
+import { handleGlobalClick, handleInput, handleKeyDownGlobal } from "./mentions/event.handler.js";
 
 
 
