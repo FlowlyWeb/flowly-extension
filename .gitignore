@@ -375,3 +375,4 @@ web-ext-artifacts/
 
 #Personnal VScode settings
 .vscode
+/dist-scripts/

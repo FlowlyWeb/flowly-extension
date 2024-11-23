@@ -42,9 +42,21 @@ Les contributions sont les bienvenues ! Voici comment contribuer :
 4. Pushez sur la branche (`git push origin feature/ma-fonctionnalite`)
 5. Ouvrez une Pull Request
 
+⚠️ Pour garantir l'intégrité et la sécurité du projet, il est strictement interdit de :
+
+- Signer l'extension avec votre propre clé de signature,
+- Tenter de publier une version modifiée de l'extension sur un addon store,
+- Publier une mise à jour sans l'accord explicite du propriétaire du projet.
+
+Toute violation de ces règles pourrait entraîner une exclusion du projet et d'autres mesures nécessaires pour protéger la communauté. Nous vous remercions pour votre compréhension et votre coopération. ⚠️
+
 Attention, merci de respecter les guidelines de contribution, sinon votre PR sera refusée.
 
-⚒️ **Serveur de développement BBB : https://bbb.theovilain.com/**
+⚒️ Lors de votre développement local, vous pouvez activer le mode de développement dans Firefox pour charger l'extension sans avoir à la recharger à chaque modification. Pour cela, ouvrez `about:debugging`, cliquez sur "Ce Firefox" puis "Charger un module temporaire" et sélectionnez le fichier manifest.json de l'extension.
+
+Vérifier le statut du serveur API de l'extension : [WWSNB Server Live Status](https://stats.uptimerobot.com/YF8p21gdMr)
+
+(Auto updater non disponible pour le développement local, pour la sécurité de l'extension et de ces utilisateurs)
 
 ### 📋 Guidelines de contribution
 

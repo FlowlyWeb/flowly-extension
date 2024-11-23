@@ -2,12 +2,29 @@
   "manifest_version": 2,
   "name": "WWSNB - We Want Slippers Not BBB",
   "author": "Théo Vilain / Teyk0o",
-  "version": "0.2",
+  "version": "0.2.1",
   "license": "All Rights Reserved",
   "description": "Retrieve functionality from Slippers for BBB.",
-  "browser_specific_settings": {"gecko": {"id": "{1b19f273-e86d-4e29-9bee-74c98ad1da73}"}},
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{1b19f273-e86d-4e29-9bee-74c98ad1da73}",
+      "update_url": "https://api.theovilain.com/updates.json",
+      "strict_min_version": "68.0"
+    }
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": false
+  },
   "permissions": [
-    "*://*.oclock.school/*"
+    "*://*.oclock.school/*",
+    "https://api.theovilain.com/*",
+    "notifications",
+    "storage",
+    "downloads",
+    "tabs"
   ],
   "icons": {
     "48": "icons/wwsnb-48.png",
@@ -15,11 +32,15 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.oclock.school/*"],
-      "js": [
-        "dist**/*.js"
+      "matches": [
+        "*://*.oclock.school/*"
       ],
-      "css": ["src/**/*.css"]
+      "js": [
+        "**/*.js"
+      ],
+      "css": [
+        "**/*.css"
+      ]
     }
   ]
 }
