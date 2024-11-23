@@ -1,5 +1,5 @@
 import { setupMentions } from "./modules/mentions.js";
-//import { setupReactions } from "./modules/reactions.js";
+import { reactionManager } from "./modules/reactions.js";
 import { checkNewMessages, observer } from "./utils/observer.js";
 
 /**
@@ -13,21 +13,41 @@ const app = {
     },
 
     init: ()=> {
-    console.log('WWSNB by Théo Vilain successfully loaded');
+        console.log('WWSNB by Théo Vilain successfully loaded');
 
 
-    // Start observing document for changes
-    observer.observe(document.body, app.config);
-    // Initialize all modules with a slight delay to ensure DOM is ready
-    setTimeout(() => {
-        console.log('[WWSNB] Starting modules initialization');
-        checkNewMessages();
-        setupMentions();
-        //setupReactions();
-        console.log('[WWSNB] Modules initialized successfully');
-    }, 1000);
+        // Start observing document for changes
+        observer.observe(document.body, app.config);
+        // Initialize all modules with a slight delay to ensure DOM is ready
+        setTimeout(() => {
+            console.log('[WWSNB] Starting modules initialization');
+            checkNewMessages();
+            setupMentions();
+            reactionManager.setup();
+            console.log('[WWSNB] Modules initialized successfully');
+        }, 1000);
 
+        // Add cleanup handlers
+        window.addEventListener('beforeunload', app.cleanup);
+        window.addEventListener('unload', app.cleanup);
+
+    },
+
+    cleanup: (event?: BeforeUnloadEvent | Event) => {
+        console.log('[WWSNB] Cleaning up...');
+
+        const isRefresh = event?.type === 'beforeunload';
+
+        observer.disconnect();
+        reactionManager.cleanup(isRefresh);
+
+        console.log('[WWSNB] Cleanup completed');
     }
 }
+
 // Launch the application when DOM is ready
-document.readyState === 'loading'? document.addEventListener('DOMContentLoaded', app.init) : app.init();
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', app.init);
+} else {
+    app.init();
+}
