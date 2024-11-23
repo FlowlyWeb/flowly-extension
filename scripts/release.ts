@@ -227,8 +227,8 @@ async function prepareDistDirectory() {
  * @throws {Error} If no XPI file is found
  */
 async function findLatestXpi(): Promise<string> {
-    const artifactsDir = 'web-ext-artifacts';
-    const files = await $`ls ${artifactsDir}/*.xpi`;
+
+    const files = await $`cd dist/web-ext-artifacts && ls *.xpi`;
     const xpiFiles = files.stdout.trim().split('\n');
 
     if (xpiFiles.length === 0) {
@@ -236,7 +236,8 @@ async function findLatestXpi(): Promise<string> {
     }
 
     // Return the latest XPI file
-    return xpiFiles[xpiFiles.length - 1];
+    return "dist/web-ext-artifacts/" + xpiFiles[xpiFiles.length - 1];
+
 }
 
 /**
@@ -301,8 +302,7 @@ async function uploadExtension(xpiPath: string, version: string) {
     console.log(chalk.blue('🚀 Uploading extension...'));
     const form = new FormData();
     form.append('version', version);
-    // @ts-ignore
-    form.append('extension', await readFile(xpiPath));
+    form.append('extension', new Blob([await readFile(xpiPath)], { type: 'application/x-xpinstall' }));
 
     try {
         const response = await fetch(`${process.env.UPDATE_SERVER}/upload`, {
@@ -398,8 +398,15 @@ async function main() {
             console.log(chalk.gray('⏩ Build skipped'));
         }
 
-        const xpiPath = await signExtension();
-        console.log(chalk.green('✅ Signing completed'));
+        let xpiPath = '';
+
+        if (!options.uploadOnly) {
+            xpiPath = await signExtension();
+            console.log(chalk.green('✅ Signing completed'));
+        } else {
+            console.log(chalk.gray('⏩ Signing skipped'));
+            xpiPath = await findLatestXpi();
+        }
 
         await uploadExtension(xpiPath, newVersion);
         console.log(chalk.green('✅ Upload completed'));

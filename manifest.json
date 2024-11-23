@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "WWSNB - We Want Slippers Not BBB",
   "author": "Théo Vilain / Teyk0o",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "license": "All Rights Reserved",
   "description": "Retrieve functionality from Slippers for BBB.",
   "browser_specific_settings": {
