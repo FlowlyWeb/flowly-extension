@@ -1,0 +1,29 @@
+// Description: TypeScript configuration for scripts, do not use this file for the main project and don't touch it.
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "outDir": "../dist-scripts",
+    "rootDir": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "./**/*",
+    "../node_modules/zx/build/globals.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "dist-scripts"
+  ],
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
+  }
+}

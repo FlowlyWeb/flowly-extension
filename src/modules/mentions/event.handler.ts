@@ -1,4 +1,4 @@
-import suggestionBoxElem from "../suggestion/suggestionbox.element";
+import suggestionBoxElem from "../suggestion/suggestionBox.element";
 import { hideSuggestions, searchAndShowSuggestions, selectSuggestion } from "../suggestion/suggestionBox.module";
 
 /**

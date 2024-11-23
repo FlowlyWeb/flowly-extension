@@ -20,11 +20,16 @@
     "types": ["firefox-webext-browser"]
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "types/*.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
     "web-ext-artifacts"
-  ]
+  ],
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
+  }
 }
