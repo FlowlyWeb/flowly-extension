@@ -1,430 +1,748 @@
 import { getActualUserName } from "./users/user.module.js";
-
-// Global variables for reactions system
-let messageReactions = new Map();
-let reactionChannel;
-
-// Available reaction emojis
-const availableReactions = [
-    '👍', '❤️', '😂', '😮', '😢', '😡',
-    '🎉', '🤔', '👀', '🔥', '✨', '👎'
-];
-
-// Helper function to safely create text node
-function createSafeTextNode(text :string) {
-    return document.createTextNode(text);
-}
-
-// Helper function to safely create emoji element
-function createEmojiElement(emoji:string, count:string) {
-    const span = document.createElement('span');
-    span.appendChild(createSafeTextNode(emoji));
-    span.appendChild(createSafeTextNode(` ${count}`));
-    return span;
-}
+import type {
+    ReactionConfig,
+    MessageReactions,
+    ParsedMessageReaction,
+    ParsedReactionData,
+    AvailableReaction,
+    ReactionElements,
+    WebSocketMessage,
+    BaseWebSocketMessage,
+    ReactionUpdateData,
+    ReactionStateData, ReactionData
+} from '../../types/reactions.js';
 
 /**
- * Initialize the reactions system
+ * Manages all reaction-related functionality using the Singleton pattern
+ * Handles WebSocket connections, UI updates, and reaction state management
  */
-export function setupReactions() {
-    console.log('[WWSNB] Initializing message reactions module');
+class ReactionManager {
+    private static instance: ReactionManager;
+    private messageReactions: MessageReactions = new Map();
+    private messageQueue: WebSocketMessage[] = [];
+    private ws?: WebSocket;
+    private reconnectAttempts = 0;
+    private messagesObserver?: MutationObserver;
+    private checkInterval?: number;
 
-    // Configure mutation observer
-    const config = {
-        attributes: true,
-        childList: true,
-        subtree: true,
-        characterData: true
+    private readonly config: ReactionConfig = {
+        maxReconnectAttempts: 5,
+        reconnectDelay: 3000,
+        checkInterval: 1000,
+        wsUrl: 'wss://api.theovilain.com/reactions'
     };
 
-    // Create observer for new messages
-    const messagesObserver = new MutationObserver((mutations) => {
-        let shouldCheckMessages = false;
+    private readonly availableReactions: AvailableReaction[] = [
+        '👍', '❤️', '😂', '😮', '😢', '😡',
+        '🎉', '🤔', '👀', '🔥', '✨', '👎'
+    ];
 
-        for (const mutation of mutations) {
-            if (mutation.type === 'childList' ||
-                mutation.type === 'characterData' ||
-                (mutation.type === 'attributes' && mutation.attributeName === 'style')) {
-                shouldCheckMessages = true;
-            }
-        }
-
-        if (shouldCheckMessages) {
-            setTimeout(checkAndAddReactionButtons, 100);
-        }
-    });
-
-    // Start observing the main containers
-    const virtualizedGrid = document.querySelector('.ReactVirtualized__Grid__innerScrollContainer');
-    const chatContainer = document.querySelector('[data-test="conversation-turns-container"]');
-    const virtualGrid = document.querySelector('.ReactVirtualized__Grid');
-    virtualizedGrid && messagesObserver.observe(virtualizedGrid, config);
-
-    if (chatContainer) {
-        messagesObserver.observe(chatContainer, config);
+    private queueMessage(message: WebSocketMessage): void {
+        this.messageQueue.push(message);
+        this.processQueue();
     }
 
-    if (virtualGrid) {
-        window.wwsnbVirtualGrid = virtualGrid;
-    }
-
-    // Observe body for structure changes
-    messagesObserver.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-
-    // Set up periodic check for new messages
-    setInterval(checkAndAddReactionButtons, 1000);
-
-    // Initial setup
-    checkAndAddReactionButtons();
-
-    // Initialize reactions with current session
-    initializeReactions(getSessionToken());
-}
-
-/**
- * Add reaction buttons to new messages
- */
-function checkAndAddReactionButtons() {
-    const containers = document.querySelectorAll('.sc-leYdVB') as unknown as HTMLElement[];
-    for (const messageContainer of containers) {
-        const container = messageContainer as HTMLElement;
-        if (!container.dataset.hasReactions) {
-            addReactionButton(container);
+    /**
+     * Gets the singleton instance of ReactionManager
+     * @returns {ReactionManager} The singleton instance
+     */
+    static getInstance(): ReactionManager {
+        if (!ReactionManager.instance) {
+            ReactionManager.instance = new ReactionManager();
         }
-    }
-}
-
-/**
- * Generate a unique ID for a message using content, username and timestamp
- * @param {HTMLElement} messageContainer The message container element
- * @returns {string} A unique message ID
- */
-function generateMessageId(messageContainer: HTMLElement) {
-    // Get message text
-    const messageText = messageContainer.querySelector('[data-test="chatUserMessageText"]')?.textContent || '';
-
-    // Get username (full path to ensure we get the correct element)
-    const userNameElement = messageContainer.querySelector('[data-test="chatUserName"]');
-    const userName = userNameElement?.textContent || '';
-
-    // Get timestamp and parse it
-    const timestampElement = messageContainer.querySelector('[data-test="chatMessageTimestamp"]');
-    const timestamp = timestampElement?.textContent || '';
-
-    // Create a string combining all elements
-    const uniqueString = `${userName}-${messageText}-${timestamp}`;
-
-    // Create a hash of the combined string
-    const hash = btoa(encodeURIComponent(uniqueString))
-        .replace(/[^a-zA-Z0-9]/g, '')  // Remove non-alphanumeric characters
-        .substring(0, 32);              // Limit length
-
-    return `msg-${hash}`;
-}
-
-/**
- * Get current session token from URL
- * @returns {string} Session token or default value
- */
-function getSessionToken() {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('sessionToken') || 'default-session';
-}
-
-/**
- * Initialize reactions system for current session
- * @param {string} sessionToken Current session token
- */
-function initializeReactions(sessionToken: string) {
-    const channelId = `wwsnb_reactions_${sessionToken}`;
-
-    if (reactionChannel) {
-        reactionChannel.close();
+        return ReactionManager.instance;
     }
 
-    reactionChannel = new BroadcastChannel(channelId);
-    reactionChannel.onmessage = handleReactionUpdate;
-
-    loadReactionsFromStorage(sessionToken);
-}
-
-/**
- * Handle reaction updates from broadcast channel
- * @param {MessageEvent} event Broadcast channel message event
- */
-function handleReactionUpdate(event: MessageEvent) {
-    if (event.data.type === 'update_reactions') {
-        try {
-            const parsedReactions = JSON.parse(event.data.reactions);
-            messageReactions = new Map(
-                Array.from(parsedReactions).map(([key, value]) => [
-                    key,
-                    new Map(Object.entries(value))
-                ])
-            );
-            updateAllReactionDisplays();
-        } catch (error) {
-            console.error('[WWSNB] Error updating reactions:', error);
-        }
+    /**
+     * Initializes the reaction system
+     * Sets up observers, periodic checks, and WebSocket connection
+     */
+    public setup(): void {
+        console.log('[WWSNB] Initializing message reactions module');
+        this.setupObserver();
+        this.startPeriodicCheck();
+        this.checkAndAddReactionButtons();
+        this.initializeReactions(this.getSessionToken());
     }
-}
 
-/**
- * Save reactions to localStorage and broadcast update
- */
-function saveReactionsToStorage() {
-    const sessionToken = getSessionToken();
-    try {
-        // Clean up reactions for non-existent messages
-        const existingMessageIds = new Set(
-            Array.from(document.querySelectorAll('.sc-leYdVB'))
-                .map(container => container.dataset.messageId)
-                .filter(Boolean)
-        );
+    /**
+     * Sets up mutation observers to watch for DOM changes
+     * Monitors specific containers and the document body
+     */
+    private setupObserver(): void {
+        const config: MutationObserverInit = {
+            attributes: true,
+            childList: true,
+            subtree: true,
+            characterData: true
+        };
 
-        const cleanedReactions = new Map();
-        for (const [messageId, reactions] of messageReactions) {
-            if (existingMessageIds.has(messageId)) {
-            cleanedReactions.set(messageId, reactions);
-            }
-        }
+        this.messagesObserver = new MutationObserver(this.handleMutations.bind(this));
 
-        messageReactions = cleanedReactions;
+        const containers = [
+            '.ReactVirtualized__Grid__innerScrollContainer',
+            '[data-test="conversation-turns-container"]',
+            '.ReactVirtualized__Grid'
+        ].map(selector => document.querySelector(selector)).filter(Boolean);
 
-        // Convert and save
-        const reactionsObj: { [key: string]: any } = {};
-        messageReactions.forEach((reactions, messageId) => {
-            for (const [emoji, users] of reactions) {
-                reactionsObj[messageId] = reactionsObj[messageId] || {};
-                reactionsObj[messageId][emoji] = users;
-            }
+        containers.forEach(container => {
+            this.messagesObserver?.observe(container!, config);
         });
 
-        const storageKey = `wwsnb_reactions_${sessionToken}`;
-        localStorage.setItem(storageKey, JSON.stringify(reactionsObj));
-
-        // Broadcast to other users
-        if (reactionChannel) {
-            reactionChannel.postMessage({
-                type: 'update_reactions',
-                reactions: JSON.stringify(Array.from(messageReactions.entries()))
-            });
-        }
-    } catch (error) {
-        console.error('[WWSNB] Error saving reactions:', error);
+        this.messagesObserver.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
     }
-}
 
-/**
- * Load reactions from localStorage
- * @param {string} sessionToken Current session token
- */
-function loadReactionsFromStorage(sessionToken: string) {
-    try {
-        const storageKey = `wwsnb_reactions_${sessionToken}`;
-        const saved = localStorage.getItem(storageKey);
-
-        if (saved) {
-            const reactionsObj = JSON.parse(saved);
-            messageReactions = new Map();
-
-            for (const [messageId, reactions] of Object.entries(reactionsObj)) {
-                const messageReactionMap = new Map<string, string[]>();
-                for (const [emoji, users] of Object.entries(reactions as { [key: string]: string[] })) {
-                    messageReactionMap.set(emoji, Array.isArray(users) ? users : []);
-                }
-                messageReactions.set(messageId, messageReactionMap);
-            };
-        } else {
-            messageReactions = new Map();
-        }
-
-        updateAllReactionDisplays();
-    } catch (error) {
-        console.error('[WWSNB] Error loading reactions:', error);
-        messageReactions = new Map();
+    /**
+     * Checks if WebSocket connection is ready
+     * @returns {boolean} True if connection is open and ready
+     */
+    private isConnectionReady(): boolean {
+        return this.ws?.readyState === WebSocket.OPEN;
     }
-}
 
-/**
- * Update all reaction displays in the UI
- */
-function updateAllReactionDisplays() {
-    const containers = document.querySelectorAll('.sc-leYdVB') as unknown as HTMLElement[];
+    /**
+     * Handles DOM mutations and triggers reaction button updates
+     * @param {MutationRecord[]} mutations Array of observed mutations
+     */
+    private handleMutations(mutations: MutationRecord[]): void {
+        const shouldCheck = mutations.some(mutation =>
+            mutation.type === 'childList' ||
+            mutation.type === 'characterData' ||
+            (mutation.type === 'attributes' && mutation.attributeName === 'style')
+        );
 
-    for (const messageContainer of containers) {
-        const messageId = (messageContainer as HTMLElement).dataset.messageId || generateMessageId(messageContainer);
-        (messageContainer as HTMLElement).dataset.messageId = messageId;
+        if (shouldCheck) {
+            this.debounce(() => this.checkAndAddReactionButtons(), 100);
+        }
+    }
 
-        if (messageReactions.has(messageId)) {
-            let reactionsContainer = messageContainer.querySelector('.reactions-container');
-            if (!reactionsContainer) {
-                reactionsContainer = document.createElement('div');
-                reactionsContainer.className = 'reactions-container';
-                messageContainer.appendChild(reactionsContainer);
+    /**
+     * Debounces a function call to prevent excessive execution
+     * @param {Function} fn Function to debounce
+     * @param {number} delay Delay in milliseconds
+     */
+    private debounce(fn: Function, delay: number): void {
+        clearTimeout(this.debounceTimeout);
+        this.debounceTimeout = setTimeout(() => fn(), delay);
+    }
+    private debounceTimeout?: number;
+
+    /**
+     * Starts periodic checking for new messages that need reaction buttons
+     */
+    private startPeriodicCheck(): void {
+        this.checkInterval = window.setInterval(
+            () => this.checkAndAddReactionButtons(),
+            this.config.checkInterval
+        );
+    }
+
+    /**
+     * Checks for messages without reaction buttons and adds them
+     */
+    private checkAndAddReactionButtons(): void {
+        const containers = document.querySelectorAll<HTMLElement>('.sc-leYdVB');
+        containers.forEach(container => {
+            if (!container.dataset.hasReactions) {
+                this.addReactionButton(container);
             }
+        });
+    }
 
-            updateReactionDisplay(messageId, reactionsContainer);
-            (messageContainer as HTMLElement).dataset.hasReactions = 'true';
+    /**
+     * Generates a unique message ID using message content, username and timestamp
+     * @param {HTMLElement} container Message container element
+     * @returns {string} Unique message identifier
+     */
+    private generateMessageId(container: HTMLElement): string {
+        const selectors = {
+            text: '[data-test="chatUserMessageText"]',
+            user: '[data-test="chatUserName"]',
+            timestamp: '[data-test="chatMessageTimestamp"]'
+        };
+
+        const elements = Object.entries(selectors).reduce((acc, [key, selector]) => ({
+            ...acc,
+            [key]: container.querySelector(selector)?.textContent || ''
+        }), {} as Record<keyof typeof selectors, string>);
+
+        const uniqueString = `${elements.user}-${elements.text}-${elements.timestamp}`;
+        return `msg-${btoa(encodeURIComponent(uniqueString))
+            .replace(/[^a-zA-Z0-9]/g, '')
+            .substring(0, 32)}`;
+    }
+
+    /**
+     * Gets current session token from URL parameters
+     * @returns {string} Session token or default value
+     */
+    private getSessionToken(): string {
+        return new URLSearchParams(window.location.search).get('sessionToken') || 'default-session';
+    }
+
+    /**
+     * Initializes reactions system for current session
+     * @param {string} sessionToken Current session token
+     */
+    private initializeReactions(sessionToken: string): void {
+        this.connectWebSocket(sessionToken);
+        this.loadReactionsFromStorage(sessionToken);
+    }
+
+    /**
+     * Establishes WebSocket connection
+     * @param {string} sessionToken Current session token
+     */
+    private connectWebSocket(sessionToken: string): void {
+        if (this.ws) {
+            this.ws.close();
         }
-    };
-}
 
-/**
- * Add or remove a reaction from a message
- * @param {string} messageId Message ID
- * @param {string} emoji Reaction emoji
- */
-function addReaction(messageId:string, emoji: string ) {
-    const reactions = messageReactions.get(messageId) || new Map();
-    const userName = getActualUserName();
+        this.ws = new WebSocket(this.config.wsUrl);
+        this.setupWebSocketHandlers(sessionToken);
+    }
 
-    if (reactions.has(emoji) && reactions.get(emoji).includes(userName)) {
-        const users = reactions.get(emoji).filter(user => user !== userName);
-        if (users.length === 0) {
-            reactions.delete(emoji);
+    /**
+     * Sets up WebSocket event handlers
+     * @param {string} sessionToken Current session token
+     */
+    private setupWebSocketHandlers(sessionToken: string): void {
+        if (!this.ws) return;
+
+        this.ws.onopen = () => {
+            console.log('[WWSNB] WebSocket connected');
+            this.reconnectAttempts = 0;
+            this.sendInitialState(sessionToken);
+            // Traiter la file d'attente après la reconnexion
+            this.processQueue();
+        };
+
+        this.ws.onmessage = this.handleWebSocketMessage.bind(this);
+        this.ws.onclose = () => this.handleReconnection(sessionToken);
+        this.ws.onerror = (error) => {
+            console.error('[WWSNB] WebSocket error:', (error as ErrorEvent).message || 'Unknown error');
+            this.handleReconnection(sessionToken);
+        };
+    }
+
+    /**
+     * Handles WebSocket message events
+     * @param {MessageEvent} event WebSocket message event
+     */
+    private handleWebSocketMessage(event: MessageEvent): void {
+        try {
+            const data = JSON.parse(event.data) as ReactionData;
+            if (data.type === 'update_reactions') {
+                this.updateReactionsState(data.reactions);
+            }
+        } catch (error) {
+            console.error('[WWSNB] Error handling WebSocket message:', error);
+        }
+    }
+
+    /**
+     * Updates reaction state and UI from WebSocket data
+     * @param {string} reactionsData Stringified reactions data
+     */
+    private updateReactionsState(reactionsData: string): void {
+        try {
+            const parsedReactions = JSON.parse(reactionsData) as ParsedMessageReaction[];
+
+            this.messageReactions = new Map(
+                parsedReactions.map((data: ParsedMessageReaction) => [
+                    data.messageId,
+                    new Map(data.reactions.map((r: ParsedReactionData) => [r.emoji, r.users]))
+                ])
+            );
+
+            this.updateAllReactionDisplays();
+        } catch (error) {
+            console.error('[WWSNB] Error updating reactions state:', error);
+        }
+    }
+
+    /**
+     * Sends initial reactions state through WebSocket
+     * @param {string} sessionToken Current session token
+     */
+    private sendInitialState(sessionToken: string): void {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+
+        const message: BaseWebSocketMessage<'update_reactions', ReactionStateData> = {
+            type: 'update_reactions',
+            sessionToken,
+            data: {
+                reactions: JSON.stringify(Array.from(this.messageReactions.entries()))
+            }
+        };
+
+        this.ws.send(JSON.stringify(message));
+    }
+
+    /**
+     * Handles WebSocket reconnection attempts
+     * @param {string} sessionToken Current session token
+     */
+    private handleReconnection(sessionToken: string): void {
+        if (this.reconnectAttempts < this.config.maxReconnectAttempts) {
+            this.reconnectAttempts++;
+            console.log(`[WWSNB] Attempting to reconnect (${this.reconnectAttempts}/${this.config.maxReconnectAttempts})...`);
+            setTimeout(() => this.connectWebSocket(sessionToken), this.config.reconnectDelay);
         } else {
-            reactions.set(emoji, users);
-        }
-    } else {
-        if (!reactions.has(emoji)) {
-            reactions.set(emoji, []);
-        }
-        reactions.get(emoji).push(userName);
-    }
-
-    messageReactions.set(messageId, reactions);
-
-    // Immediately update the display for this specific message
-    const messageContainer = document.querySelector(`[data-message-id="${messageId}"]`);
-    if (messageContainer) {
-        const reactionsContainer = messageContainer.querySelector('.reactions-container') as HTMLElement;
-        if (reactionsContainer) {
-            updateReactionDisplay(messageId, reactionsContainer);
+            console.error('[WWSNB] Max reconnection attempts reached');
         }
     }
 
-    // Then save and broadcast
-    saveReactionsToStorage();
-}
+    /**
+     * Loads reactions from localStorage for the current session
+     * @param {string} sessionToken Current session token
+     */
+    private loadReactionsFromStorage(sessionToken: string): void {
+        try {
+            const storageKey = `wwsnb_reactions_${sessionToken}`;
+            const saved = localStorage.getItem(storageKey);
 
-/**
- * Update the reaction display for a specific message
- * @param {string} messageId Message ID
- * @param {HTMLElement} container Reactions container element
- */
-function updateReactionDisplay(messageId: string, container: HTMLElement) {
-    // Clear existing content safely
-    while (container.firstChild) {
-        container.removeChild(container.firstChild);
+            if (saved) {
+                const reactionsObj = JSON.parse(saved);
+                this.messageReactions = new Map();
+
+                for (const [messageId, reactions] of Object.entries(reactionsObj)) {
+                    const messageReactionMap = new Map<string, string[]>();
+                    for (const [emoji, users] of Object.entries(reactions as { [key: string]: string[] })) {
+                        messageReactionMap.set(emoji, Array.isArray(users) ? users : []);
+                    }
+                    this.messageReactions.set(messageId, messageReactionMap);
+                }
+            }
+            this.updateAllReactionDisplays();
+        } catch (error) {
+            console.error('[WWSNB] Error loading reactions:', error);
+            this.messageReactions = new Map();
+        }
     }
 
-    const reactions = messageReactions.get(messageId) || new Map();
-    const userName = getActualUserName();
+    /**
+     * Saves reactions to localStorage
+     */
+    private saveToLocalStorage(sessionToken: string): void {
+        const storageKey = `wwsnb_reactions_${sessionToken}`;
+        const reactionsObj = Object.fromEntries(
+            Array.from(this.messageReactions.entries()).map(([messageId, reactions]) => [
+                messageId,
+                Object.fromEntries(reactions)
+            ])
+        );
+        localStorage.setItem(storageKey, JSON.stringify(reactionsObj));
+    }
 
-    for (const [emoji, users] of reactions) {
+    /**
+     * Updates reaction displays for all messages in the UI
+     */
+    private updateAllReactionDisplays(): void {
+        const containers = document.querySelectorAll<HTMLElement>('.sc-leYdVB');
+        containers.forEach(messageContainer => {
+            const messageId = messageContainer.dataset.messageId || this.generateMessageId(messageContainer);
+            messageContainer.dataset.messageId = messageId;
+
+            if (this.messageReactions.has(messageId)) {
+                this.ensureReactionsContainer(messageContainer);
+                this.updateReactionDisplay(messageId, messageContainer);
+                messageContainer.dataset.hasReactions = 'true';
+            }
+        });
+    }
+
+    /**
+     * Ensures a reactions container exists for a message
+     * @param {HTMLElement} messageContainer Message container element
+     * @returns {HTMLElement} Reactions container element
+     */
+    private ensureReactionsContainer(messageContainer: HTMLElement): HTMLElement {
+        let container = messageContainer.querySelector<HTMLElement>('.reactions-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'reactions-container';
+            messageContainer.appendChild(container);
+        }
+        return container;
+    }
+
+    /**
+     * Adds or removes a reaction from a message
+     * @param {string} messageId Message identifier
+     * @param {string} emoji Reaction emoji
+     */
+    private async addReaction(messageId: string, emoji: string): Promise<void> {
+        const currentUserName = getActualUserName();
+        if (!currentUserName) {
+            console.error('[WWSNB] User name is not defined');
+            return;
+        }
+
+        try {
+            // Envoyer la mise à jour au serveur d'abord
+            await this.sendReactionUpdate(messageId, emoji, currentUserName);
+
+            // La mise à jour locale se fait après la confirmation du serveur
+            this.updateLocalReaction(messageId, emoji, currentUserName);
+            this.updateMessageReactions(messageId);
+            this.saveToLocalStorage(this.getSessionToken());
+        } catch (error) {
+            console.error('[WWSNB] Failed to update reaction:', error);
+        }
+    }
+
+    /**
+     * Updates reaction display for a specific message
+     * @param {string} messageId Message identifier
+     */
+    private updateMessageReactions(messageId: string): void {
+        const messageContainer = document.querySelector<HTMLElement>(`[data-message-id="${messageId}"]`);
+        if (messageContainer) {
+            const reactionsContainer = this.ensureReactionsContainer(messageContainer);
+            this.updateReactionDisplay(messageId, reactionsContainer);
+        }
+    }
+
+    /**
+     * Updates reaction display for a specific message
+     * @param {string} messageId Message identifier
+     * @param {HTMLElement} container Reactions container element
+     */
+    private updateReactionDisplay(messageId: string, container: HTMLElement): void {
+        this.clearContainer(container);
+        const reactions = this.messageReactions.get(messageId) || new Map();
+        const currentUserName = getActualUserName();
+
+        // Check if username is defined
+        if (!currentUserName) {
+            console.error('[WWSNB] User name is not defined');
+            return;
+        }
+
+        for (const [emoji, users] of reactions) {
+            const badge = this.createReactionBadge(emoji, users, currentUserName);
+            badge.addEventListener('click', () => this.addReaction(messageId, emoji));
+            container.appendChild(badge);
+        }
+    }
+
+    /**
+     * Safely clears a container's contents
+     * @param {HTMLElement} container Container to clear
+     */
+    private clearContainer(container: HTMLElement): void {
+        while (container.firstChild) {
+            container.removeChild(container.firstChild);
+        }
+    }
+
+    /**
+     * Creates a reaction badge element
+     * @param {string} emoji Reaction emoji
+     * @param {string[]} users Users who reacted
+     * @param {string} currentUser Current username
+     * @returns {HTMLElement} Reaction badge element
+     */
+    private createReactionBadge(emoji: string, users: string[], currentUser: string): HTMLElement {
         const badge = document.createElement('div');
         badge.className = 'reaction-badge';
 
-        if (users.includes(userName)) {
+        if (currentUser && users.includes(currentUser)) {
             badge.style.backgroundColor = '#bbdefb';
         }
 
-        const emojiElement = createEmojiElement(emoji, users.length.toString());
+        const emojiElement = this.createEmojiElement(emoji, users.length.toString());
         badge.appendChild(emojiElement);
         badge.setAttribute('title', users.join(', '));
-        badge.addEventListener('click', () => addReaction(messageId, emoji));
-        container.appendChild(badge);
-    }
-}
 
-/**
- * Add reaction button to a message container
- * @param {HTMLElement} messageContainer The message container element
- */
-function addReactionButton(messageContainer: HTMLElement) {
-    if (messageContainer.dataset.hasReactions === 'true') {
-        return;
+        return badge;
     }
 
-    const messageId = generateMessageId(messageContainer);
-    messageContainer.dataset.messageId = messageId;
-    messageContainer.dataset.hasReactions = 'true';
-
-    // Create reactions wrapper and container
-    const reactionsWrapper = document.createElement('div');
-    reactionsWrapper.className = 'reactions-wrapper';
-
-    const reactionsContainer = document.createElement('div');
-    reactionsContainer.className = 'reactions-container';
-    reactionsWrapper.appendChild(reactionsContainer);
-
-    // Create and add reaction button
-    const reactionButton = document.createElement('button');
-    reactionButton.className = 'reaction-button';
-    // Safely add emoji
-    reactionButton.appendChild(createSafeTextNode('😀'));
-    reactionButton.setAttribute('title', 'Add reaction');
-    messageContainer.appendChild(reactionButton);
-
-    // Add reactions wrapper
-    messageContainer.appendChild(reactionsWrapper);
-
-    // Initialize reactions for this message
-    if (!messageReactions.has(messageId)) {
-        messageReactions.set(messageId, new Map());
+    /**
+     * Creates an emoji element with count
+     * @param {string} emoji Emoji character
+     * @param {string} count Reaction count
+     * @returns {HTMLElement} Emoji element
+     */
+    private createEmojiElement(emoji: string, count: string): HTMLElement {
+        const span = document.createElement('span');
+        span.appendChild(document.createTextNode(emoji));
+        span.appendChild(document.createTextNode(` ${count}`));
+        return span;
     }
 
-    updateReactionDisplay(messageId, reactionsContainer);
+    /**
+     * Adds reaction button and container to a message
+     * @param {HTMLElement} messageContainer Message container element
+     */
+    private addReactionButton(messageContainer: HTMLElement): void {
+        if (messageContainer.dataset.hasReactions === 'true') return;
 
-    // Add click handler for reaction button
-    reactionButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showReactionPicker(messageId, reactionButton);
-    });
-}
+        const messageId = this.generateMessageId(messageContainer);
+        messageContainer.dataset.messageId = messageId;
+        messageContainer.dataset.hasReactions = 'true';
 
-/**
- * Show reaction picker menu
- * @param {string} messageId The ID of the message
- * @param {HTMLElement} buttonElement The button that triggered the picker
- */
-function showReactionPicker(messageId: string, buttonElement: HTMLElement) {
-    // Remove any existing picker
-    const existingPicker = document.querySelector('.reaction-picker');
-    existingPicker?.remove();
+        const { reactionsWrapper, reactionsContainer } = this.createReactionElements();
+        const reactionButton = this.createReactionButton(messageId);
 
-    // Create new picker
-    const picker = document.createElement('div');
-    picker.className = 'reaction-picker';
+        messageContainer.appendChild(reactionButton);
+        messageContainer.appendChild(reactionsWrapper);
 
-    // Add available reactions
-    for (const emoji of availableReactions) {
-        const button = document.createElement('button');
-        button.appendChild(createSafeTextNode(emoji));
-        button.addEventListener('click', () => {
-            addReaction(messageId, emoji);
-            picker.remove();
-        });
-        picker.appendChild(button);
-    }
-
-    // Position picker relative to button
-    const rect = buttonElement.getBoundingClientRect();
-    picker.style.position = 'fixed';
-    picker.style.left = `${rect.left - picker.offsetWidth / 2 + buttonElement.offsetWidth / 2}px`;
-    picker.style.top = `${rect.top - 10 - picker.offsetHeight}px`;
-
-    document.body.appendChild(picker);
-
-    // Close picker when clicking outside
-    document.addEventListener('click', function closePickerOnClickOutside(e) {
-        if (!picker.contains(e.target) && e.target !== buttonElement) {
-            picker.remove();
-            document.removeEventListener('click', closePickerOnClickOutside);
+        if (!this.messageReactions.has(messageId)) {
+            this.messageReactions.set(messageId, new Map());
         }
-    });
+
+        this.updateReactionDisplay(messageId, reactionsContainer);
+    }
+
+    /**
+     * Creates reaction wrapper and container elements
+     * @returns {Object} Object containing wrapper and container elements
+     */
+    private createReactionElements(): ReactionElements {
+        const reactionsWrapper = document.createElement('div');
+        reactionsWrapper.className = 'reactions-wrapper';
+
+        const reactionsContainer = document.createElement('div');
+        reactionsContainer.className = 'reactions-container';
+        reactionsWrapper.appendChild(reactionsContainer);
+
+        return { reactionsWrapper, reactionsContainer };
+    }
+
+    /**
+     * Creates the reaction button element
+     * @param {string} messageId Message identifier
+     * @returns {HTMLElement} Reaction button element
+     */
+    private createReactionButton(messageId: string): HTMLElement {
+        const button = document.createElement('button');
+        button.className = 'reaction-button';
+        button.appendChild(document.createTextNode('😀'));
+        button.setAttribute('title', 'Add reaction');
+
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.showReactionPicker(messageId, button);
+        });
+
+        return button;
+    }
+
+    /**
+     * Shows the reaction picker menu
+     * @param {string} messageId Message identifier
+     * @param {HTMLElement} buttonElement Button that triggered the picker
+     */
+    private showReactionPicker(messageId: string, buttonElement: HTMLElement): void {
+        const existingPicker = document.querySelector('.reaction-picker');
+        existingPicker?.remove();
+
+        const picker = this.createReactionPicker(messageId);
+        this.positionPicker(picker, buttonElement);
+        document.body.appendChild(picker);
+
+        this.setupPickerClickOutside(picker, buttonElement);
+    }
+
+    /**
+     * Creates the reaction picker element
+     * @param {string} messageId Message identifier
+     * @returns {HTMLElement} Reaction picker element
+     */
+    private createReactionPicker(messageId: string): HTMLElement {
+        const picker = document.createElement('div');
+        picker.className = 'reaction-picker';
+
+        this.availableReactions.forEach(emoji => {
+            const button = document.createElement('button');
+            button.appendChild(document.createTextNode(emoji));
+            button.addEventListener('click', () => {
+                this.addReaction(messageId, emoji);
+                picker.remove();
+            });
+            picker.appendChild(button);
+        });
+
+        return picker;
+    }
+
+    /**
+     * Positions the reaction picker relative to the button
+     * @param {HTMLElement} picker Reaction picker element
+     * @param {HTMLElement} buttonElement Button element
+     */
+    private positionPicker(picker: HTMLElement, buttonElement: HTMLElement): void {
+        const rect = buttonElement.getBoundingClientRect();
+        picker.style.position = 'fixed';
+        picker.style.left = `${rect.left - picker.offsetWidth / 2 + buttonElement.offsetWidth / 2}px`;
+        picker.style.top = `${rect.top - 10 - picker.offsetHeight}px`;
+    }
+
+    /**
+     * Sets up click outside handler for the reaction picker
+     * @param {HTMLElement} picker Reaction picker element
+     * @param {HTMLElement} buttonElement Button element
+     */
+    private setupPickerClickOutside(picker: HTMLElement, buttonElement: HTMLElement): void {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (!picker.contains(e.target as Node) && e.target !== buttonElement) {
+                picker.remove();
+                document.removeEventListener('click', handleClickOutside);
+            }
+        };
+
+        document.addEventListener('click', handleClickOutside);
+    }
+
+    /**
+     * Processes the message queue
+     * @returns {Promise<void>}
+     */
+    private async processQueue(): Promise<void> {
+        if (this.isConnectionReady() && this.messageQueue.length > 0) {
+            const message = this.messageQueue.shift();
+            if (message) {
+                try {
+                    await this.sendMessage(message);
+                    await this.processQueue();
+                } catch (error) {
+                    // En cas d'échec, remettre le message dans la file
+                    this.messageQueue.unshift(message);
+                    console.error('[WWSNB] Failed to send message:', error);
+                }
+            }
+        }
+    }
+
+    /**
+     * Sends a reaction update to the server
+     * @param {string} messageId Message identifier
+     * @param {string} emoji Reaction emoji
+     * @param {string} userId User identifier
+     * @returns {Promise<void>}
+     */
+    private async sendReactionUpdate(messageId: string, emoji: string, userId: string): Promise<void> {
+        const message: BaseWebSocketMessage<'reaction_update', ReactionUpdateData> = {
+            type: 'reaction_update',
+            data: {
+                messageId,
+                emoji,
+                userId,
+                action: this.getReactionAction(messageId, emoji, userId)
+            }
+        };
+
+        if (this.isConnectionReady()) {
+            await this.sendMessage(message);
+        } else {
+            this.queueMessage(message);
+        }
+    }
+
+    /**
+     * Determines if this is an add or remove reaction action
+     * @param {string} messageId Message identifier
+     * @param {string} emoji Reaction emoji
+     * @param {string} userId User identifier
+     * @returns {'add' | 'remove'} Action type
+     */
+    private getReactionAction(messageId: string, emoji: string, userId: string): 'add' | 'remove' {
+        const reactions = this.messageReactions.get(messageId);
+        const users = reactions?.get(emoji) || [];
+        return users.includes(userId) ? 'remove' : 'add';
+    }
+
+    /**
+     * Sends a message through WebSocket
+     * @param {Object} message Message to send
+     * @param timeout Timeout in milliseconds
+     * @returns {Promise<void>}
+     */
+    private async sendMessage(message: WebSocketMessage, timeout: number = 5000): Promise<void> {
+        if (!this.ws || !this.isConnectionReady()) {
+            throw new Error('WebSocket connection not ready');
+        }
+
+        return new Promise((resolve, reject) => {
+            const timeoutId = setTimeout(() => {
+                reject(new Error('WebSocket message timeout'));
+            }, timeout);
+
+            try {
+                this.ws!.send(JSON.stringify(message));
+                clearTimeout(timeoutId);
+                resolve();
+            } catch (error) {
+                clearTimeout(timeoutId);
+                reject(error);
+            }
+        });
+    }
+
+    /**
+     * Updates the local reaction state
+     * @param {string} messageId Message identifier
+     * @param {string} emoji Reaction emoji
+     * @param {string} userId User identifier
+     * @private
+     */
+    private updateLocalReaction(messageId: string, emoji: string, userId: string): void {
+        const reactions = this.messageReactions.get(messageId) || new Map<string, string[]>();
+        const users = reactions.get(emoji) || [];
+        const isRemoving = users.includes(userId);
+
+        if (isRemoving) {
+            const updatedUsers = users.filter(user => user !== userId);
+            if (updatedUsers.length === 0) {
+                reactions.delete(emoji);
+            } else {
+                reactions.set(emoji, updatedUsers);
+            }
+        } else {
+            reactions.set(emoji, [...users, userId]);
+        }
+
+        this.messageReactions.set(messageId, reactions);
+    }
+
+    /**
+     * Cleans up resources and disconnects WebSocket
+     * @param {boolean} isRefresh Indicates if this is a page refresh
+     */
+    public cleanup(isRefresh: boolean = false): void {
+
+        this.messagesObserver?.disconnect();
+        clearInterval(this.checkInterval);
+
+        if (this.ws) {
+            if (isRefresh) {
+                this.ws.close(1000, 'Page refresh');
+            } else {
+                this.ws.close();
+            }
+        }
+
+        if (isRefresh) {
+            try {
+                const sessionToken = this.getSessionToken();
+                this.saveToLocalStorage(sessionToken);
+            } catch (error) {
+                console.error('[WWSNB] Failed to save state during refresh:', error);
+            }
+        } else {
+            try {
+                localStorage.removeItem(`wwsnb_reactions_${this.getSessionToken()}`);
+            } catch (error) {
+                console.error('[WWSNB] Failed to clean localStorage:', error);
+            }
+        }
+    }
 }
+
+// Export singleton instance
+export const reactionManager = ReactionManager.getInstance();
