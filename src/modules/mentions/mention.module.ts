@@ -1,5 +1,4 @@
-import suggestionBoxElem from "../suggestion/suggestionBox.element";
-import { getActualUserName } from "../users/user.module";
+import { getActualUserName } from "../users/user.module.js";
 
 export function addClassMention(message: HTMLElement) {
     // Add special styling class

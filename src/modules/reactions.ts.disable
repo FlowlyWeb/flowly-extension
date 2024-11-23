@@ -1,4 +1,4 @@
-import { getActualUserName } from "./users/user.module";
+import { getActualUserName } from "./users/user.module.js";
 
 // Global variables for reactions system
 let messageReactions = new Map();

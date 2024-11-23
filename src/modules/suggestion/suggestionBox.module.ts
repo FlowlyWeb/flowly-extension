@@ -1,5 +1,5 @@
-import { getCachedUsers } from "../users/user.module";
-import suggestionBoxElem from "./suggestionBox.element";
+import { getCachedUsers } from "../users/user.module.js";
+import suggestionBoxElem from "./suggestionBox.element.js";
 
 /**
  * Hide the suggestion box

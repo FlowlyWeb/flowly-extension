@@ -191,7 +191,6 @@ async function prepareDistDirectory() {
 
         // TODO: If a new content script is added, it should be added here
         manifest.content_scripts[0].js = [
-            "config/update.config.js",
             "modules/mentions/event.handler.js",
             "modules/mentions/mention.module.js",
             "modules/moderators/moderator.module.js",
@@ -200,8 +199,6 @@ async function prepareDistDirectory() {
             "modules/suggestion/suggestionBox.module.js",
             "modules/users/user.module.js",
             "modules/mentions.js",
-            "modules/reactions.js",
-            "services/updater.service.js",
             "utils/observer.js",
             "content.js"
 

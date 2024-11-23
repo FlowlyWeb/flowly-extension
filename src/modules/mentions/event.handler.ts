@@ -1,5 +1,5 @@
-import suggestionBoxElem from "../suggestion/suggestionBox.element";
-import { hideSuggestions, searchAndShowSuggestions, selectSuggestion } from "../suggestion/suggestionBox.module";
+import suggestionBoxElem from "../suggestion/suggestionBox.element.js";
+import { hideSuggestions, searchAndShowSuggestions, selectSuggestion } from "../suggestion/suggestionBox.module.js";
 
 /**
  * Handle keydown events on the input field
