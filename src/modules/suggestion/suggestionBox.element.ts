@@ -1,5 +1,7 @@
 const suggestionBoxElem = document.createElement('div');
-suggestionBoxElem.id = 'suggestion-box';
-suggestionBoxElem.classList.add('suggestion-box');
+suggestionBoxElem.id = 'mention-suggestions';
+suggestionBoxElem.classList.add('mention-suggestions');
+
+document.body.appendChild(suggestionBoxElem);
 
 export default suggestionBoxElem;

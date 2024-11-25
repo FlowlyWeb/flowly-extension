@@ -27,12 +27,14 @@ export function getCachedUsers(): User[] {
  * @returns {User[]} Array of user objects with name, initials, and background color
  */
 export function getAllUsers(): User[] {
-  // const users = new Set();
-
   const usersFromList = getUsersFromUserListItem();
   const usersFromDataMessageID = getUserFromDataMessageID();
 
-  return [...usersFromList, ...usersFromDataMessageID];
+  const allUsers = [...usersFromList, ...usersFromDataMessageID];
+  const uniqueUsers = Array.from(new Set(allUsers.map(user => user.name)))
+    .map(name => allUsers.find(user => user.name === name));
+
+  return uniqueUsers as User[];
 }
 
   // Get users from the user list

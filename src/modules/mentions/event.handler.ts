@@ -58,12 +58,13 @@ export function handleGlobalClick(e: MouseEvent) {
   if (suggestionBoxElem) {
       const target = e.target as HTMLElement;
 
+      const chatElem = document.getElementById('message-input') as HTMLElement;
       const suggestionItem = target.closest('.mention-suggestion-item');
       if (suggestionItem) {
           e.preventDefault();
           e.stopPropagation();
           e.stopImmediatePropagation();
-          selectSuggestion(suggestionItem as HTMLElement, target as HTMLInputElement);
+          selectSuggestion(suggestionItem as HTMLElement, chatElem as HTMLInputElement);
       } else if (!suggestionBoxElem.contains(target) && target.id !== 'message-input') {
           hideSuggestions();
       }
