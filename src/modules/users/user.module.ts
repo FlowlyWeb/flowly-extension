@@ -1,4 +1,5 @@
-import type { User } from '../../../types/user';
+import type {User} from '../../../types/user';
+
 const CACHE_DURATION = 3000;
 
 /**
@@ -116,6 +117,8 @@ export function cleanUsername(name:string):string {
       .replace(/\s+Verrouillé($|\s)/g, '')    // Remove "Verrouillé" status
       .replace(/\s+Webcam($|\s)/g, '')        // Remove "Webcam" status
       .replace(/\s+Mobile($|\s)/g, '')        // Remove "Mobile" status
+      .replace(/\s+Présentateur($|\s)/g, '')  // Remove "Présentateur" status
+      .replace(/\s+Modérateur($|\s)/g, '')    // Remove "Modérateur" status
       .replace(/\s*\|\s*/g, '')               // Remove separators
       .trim();                                // Remove extra spaces
 }
@@ -134,5 +137,5 @@ export function getActualUserName() {
   }
 
   // Retourne le nom complet trouvé
-  return fullNameMatch[1].trim();
+  return cleanUsername(fullNameMatch[1].trim());
 }

@@ -1,9 +1,14 @@
 export function addClassQuestion(message: HTMLElement) {
+
   const messageContainer = message.closest('.sc-leYdVB');
-  // Add highlight class if not already present
-  messageContainer
-  && !messageContainer.classList.contains('question-highlight')
-  && messageContainer.classList.add('question-highlight');
+  if (!messageContainer) {
+    return;
+  }
+  const parent = messageContainer.closest('[role="listitem"]') as HTMLElement;
+
+  parent
+  && !parent.classList.contains('question-highlight')
+  && parent.classList.add('question-highlight');
 }
 
 export function checkForQuestions(message: HTMLElement, textContent: string | null) {

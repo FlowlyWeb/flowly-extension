@@ -1,13 +1,20 @@
 export function checkForModeratorMessages(message: HTMLElement) {
-    if (message.hasAttribute('moderator-checked')) {
-        return;
+
+    console.log('Checking for moderator messages');
+
+    if (message.dataset.moderatorChecked === 'true') {
+        console.log('Already checked this message');
     }
-    message.setAttribute('moderator-checked', 'true');
+    message.dataset.moderatorChecked = 'true';
+
+    // Get parent with role="listitem"
+    const parent = message.closest('[role="listitem"]') as HTMLElement;
 
     // Look for moderator avatar
-    const moderatorAvatar = message.querySelector('[data-test="moderatorAvatar"]');
+    const moderatorAvatar = parent.querySelector('[data-test="moderatorAvatar"]');
     if (moderatorAvatar) {
-        addClassModerator(message);
+        console.log('Found moderator message');
+        addClassModerator(parent);
     }
 }
 
