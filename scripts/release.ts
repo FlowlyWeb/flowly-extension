@@ -153,7 +153,7 @@ async function bumpVersion(type: VersionType): Promise<string> {
 async function buildExtension() {
     console.log(chalk.blue('🏗️  Building extension...'));
     try {
-        await $`npm run build`;
+        await $`npm run build:prod`;
     } catch (error) {
         console.error(chalk.red('Build failed:'), error);
         throw error;
@@ -168,50 +168,13 @@ async function prepareDistDirectory() {
     console.log(chalk.blue('🔧 Preparing dist directory...'));
 
     try {
-
         if (!existsSync('dist')) {
             console.log(chalk.red('❌ Dist directory not found. Please run build first.'));
             throw new Error('Dist directory not found');
         }
 
-        // Copy icons in the dist directory
-        console.log(chalk.gray('Setting up icons...'));
-        await $`mkdir -p dist/icons`;
-        await $`cp icons/wwsnb-48.png dist/icons/ || true`;
-        await $`cp icons/wwsnb-96.png dist/icons/ || true`;
-
-        // Copy styles in the dist directory
-        console.log(chalk.gray('Setting up styles...'));
-        await $`mkdir -p dist/styles`;
-        await $`cp src/styles/styles.css dist/styles/`;
-
-        // Copy manifest.json and update the JS and CSS files because Firefox doesn't support glob patterns
-        console.log(chalk.gray('Preparing manifest.json...'));
-        const manifest = JSON.parse(await readFile('manifest.json', 'utf-8'));
-
-        // TODO: If a new content script is added, it should be added here
-        manifest.content_scripts[0].js = [
-            "modules/mentions/event.handler.js",
-            "modules/mentions/mention.module.js",
-            "modules/moderators/moderator.module.js",
-            "modules/question/question.module.js",
-            "modules/suggestion/suggestionBox.element.js",
-            "modules/suggestion/suggestionBox.module.js",
-            "modules/users/user.module.js",
-            "modules/mentions.js",
-            "utils/observer.js",
-            "content.js"
-
-        ];
-
-        // TODO: If a new CSS file is added, it should be added here
-        manifest.content_scripts[0].css = [
-            "styles/styles.css"
-        ];
-
-        await writeFile('dist/manifest.json', JSON.stringify(manifest, null, 2));
-
-        console.log(chalk.green('✅ Manifest, icons and styles copied to dist'));
+        // Plus besoin de copier les fichiers car Webpack le fait déjà
+        console.log(chalk.green('✅ Build directory ready'));
     } catch (error) {
         console.error(chalk.red('Error preparing dist directory:'), error);
         throw error;

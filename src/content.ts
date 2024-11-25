@@ -1,6 +1,6 @@
-import { setupMentions } from "./modules/mentions.js";
-import { reactionManager } from "./modules/reactions.js";
-import { checkNewMessages, observer } from "./utils/observer.js";
+import { setupMentions } from "./modules/mentions";
+import { reactionManager } from "./modules/reactions";
+import { checkNewMessages, observer } from "./utils/observer";
 
 /**
  * Initialize all WWSNB modules

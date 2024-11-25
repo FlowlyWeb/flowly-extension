@@ -2,7 +2,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import CopyPlugin from 'copy-webpack-plugin';
 import webpack from 'webpack';
-import TerserPlugin from 'terser-webpack-plugin';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,24 +22,7 @@ const baseConfig = {
         alias: {
             '@': path.resolve(__dirname, 'src/')
         }
-    },
-    optimization: {
-        minimize: true,
-        minimizer: [
-            new TerserPlugin({
-                terserOptions: {
-                    compress: {
-                        pure_funcs: [], // Ne pas retirer les console.log
-                        drop_console: false, // Garder les console.log
-                    },
-                    format: {
-                        comments: false,
-                    },
-                },
-                extractComments: false,
-            }),
-        ],
-    },
+    }
 };
 
 // Configuration pour l'extension web
@@ -80,30 +62,9 @@ const extensionConfig = {
                     }
                 }
             ],
-        }),
-        new webpack.ProvidePlugin({
-            process: 'process/browser',
-            Buffer: ['buffer', 'Buffer']
         })
     ],
-    devtool: 'source-map',
-    resolve: {
-        ...baseConfig.resolve,
-        fallback: {
-            "path": 'path-browserify',
-            "fs": false,
-            "crypto": 'crypto-browserify',
-            "buffer": 'buffer',
-            "stream": 'stream-browserify',
-            "util": 'util',
-            "url": 'url',
-            "assert": 'assert',
-            "http": 'stream-http',
-            "https": 'https-browserify',
-            "os": 'os-browserify/browser',
-            "process": 'process/browser'
-        }
-    }
+    devtool: 'source-map'
 };
 
 // Configuration pour les scripts Node
@@ -117,12 +78,19 @@ const nodeConfig = {
     output: {
         filename: '[name].js',
         path: path.resolve(__dirname, 'dist-scripts'),
-        clean: true
+        clean: true,
+        library: {
+            type: 'module'
+        }
     },
+    experiments: {
+        outputModule: true
+    },
+    externalsType: 'module',
     externals: {
-        'zx': 'commonjs zx',
-        'node-fetch': 'commonjs node-fetch',
-        'form-data': 'commonjs form-data'
+        'zx': 'zx',
+        'node-fetch': 'node-fetch',
+        'form-data': 'form-data'
     }
 };
 

@@ -1,4 +1,4 @@
-import { getActualUserName } from "./users/user.module.js";
+import { getActualUserName } from "./users/user.module";
 import type {
     ReactionConfig,
     MessageReactions,
@@ -176,11 +176,33 @@ class ReactionManager {
     }
 
     /**
-     * Gets current session token from URL parameters
-     * @returns {string} Session token or default value
+     * Gets encrypted session token that remains consistent for same input
+     * @returns {string} Encrypted session token or default value
      */
     private getSessionToken(): string {
-        return new URLSearchParams(window.location.search).get('sessionToken') || 'default-session';
+        const sessionTitle = document.querySelector('[data-test="presentationTitle"]')?.textContent;
+        if (!sessionTitle) {
+            console.error('[WWSNB] Session not found');
+            return 'unknown-session';
+        }
+
+        // Utilisation d'une fonction de hachage simple pour générer un token cohérent
+        const generateHash = (str: string): string => {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Conversion en 32 bits
+            }
+            // Conversion en hex et prise des 8 derniers caractères
+            return (hash >>> 0).toString(16).slice(-8);
+        };
+
+        // Ajout d'un sel fixe pour renforcer la sécurité
+        const SALT = "WWSNB_2024";
+        const tokenBase = `${SALT}${sessionTitle}`;
+
+        return generateHash(tokenBase);
     }
 
     /**
@@ -249,6 +271,12 @@ class ReactionManager {
      */
     private updateReactionsState(reactionsData: string): void {
         try {
+
+            if (!reactionsData) {
+                console.log('[WWSNB] No reactions data received');
+                return;
+            }
+
             const parsedReactions = JSON.parse(reactionsData) as ParsedMessageReaction[];
 
             this.messageReactions = new Map(
@@ -382,14 +410,17 @@ class ReactionManager {
             return;
         }
 
+        const sessionId: string = this.getSessionToken();
+
         try {
             // Envoyer la mise à jour au serveur d'abord
-            await this.sendReactionUpdate(messageId, emoji, currentUserName);
+            await this.sendReactionUpdate(messageId, sessionId, emoji, currentUserName);
 
             // La mise à jour locale se fait après la confirmation du serveur
             this.updateLocalReaction(messageId, emoji, currentUserName);
             this.updateMessageReactions(messageId);
             this.saveToLocalStorage(this.getSessionToken());
+            console.debug(`[WWSNB] Updated reaction: ${emoji} on message ${messageId}`);
         } catch (error) {
             console.error('[WWSNB] Failed to update reaction:', error);
         }
@@ -610,6 +641,7 @@ class ReactionManager {
                 try {
                     await this.sendMessage(message);
                     await this.processQueue();
+                    console.debug('[WWSNB] Processed message from queue:', message);
                 } catch (error) {
                     // En cas d'échec, remettre le message dans la file
                     this.messageQueue.unshift(message);
@@ -626,9 +658,10 @@ class ReactionManager {
      * @param {string} userId User identifier
      * @returns {Promise<void>}
      */
-    private async sendReactionUpdate(messageId: string, emoji: string, userId: string): Promise<void> {
+    private async sendReactionUpdate(messageId: string, sessionId: string, emoji: string, userId: string): Promise<void> {
         const message: BaseWebSocketMessage<'reaction_update', ReactionUpdateData> = {
             type: 'reaction_update',
+            sessionToken: sessionId,
             data: {
                 messageId,
                 emoji,
@@ -639,6 +672,7 @@ class ReactionManager {
 
         if (this.isConnectionReady()) {
             await this.sendMessage(message);
+            console.debug('[WWSNB] Sent reaction update:', message);
         } else {
             this.queueMessage(message);
         }
@@ -675,6 +709,7 @@ class ReactionManager {
 
             try {
                 this.ws!.send(JSON.stringify(message));
+                console.debug('[WWSNB] Sent message to WSS:', message);
                 clearTimeout(timeoutId);
                 resolve();
             } catch (error) {
