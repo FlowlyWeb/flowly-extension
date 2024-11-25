@@ -1,6 +1,6 @@
-import { checkForMentions } from "../modules/mentions/mention.module.js";
-import { checkForModeratorMessages } from "../modules/moderators/moderator.module.js";
-import { checkForQuestions } from "../modules/question/question.module.js";
+import { checkForMentions } from "../modules/mentions/mention.module";
+import { checkForModeratorMessages } from "../modules/moderators/moderator.module";
+import { checkForQuestions } from "../modules/question/question.module";
 
 export const observer = new MutationObserver((mutations) => {
   for (const mutation of mutations) {
@@ -12,7 +12,6 @@ export const observer = new MutationObserver((mutations) => {
 
 
 export function checkNewMessages() {
-  console.log('[WWSNB] Start checking new messages for questions');
   // Get all messages using data-test attribute
   const messages = document.querySelectorAll('[data-test="chatUserMessageText"]') as unknown as HTMLElement[];
 
@@ -30,6 +29,5 @@ export function checkNewMessages() {
 
 
   }
-  console.log('[WWSNB] New messages checked');
 
 }

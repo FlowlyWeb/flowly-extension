@@ -1,13 +1,12 @@
 {
   "compilerOptions": {
     "target": "ES2021",
-    "module": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "NodeNext",
-    "moduleDetection": "force",
     "allowImportingTsExtensions": false,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -19,7 +18,8 @@
       "@/*": ["./*"]
     },
     "lib": ["DOM", "ES2021"],
-    "types": ["firefox-webext-browser"]
+    "types": ["firefox-webext-browser"],
+    "sourceMap": true
   },
   "include": [
     "src/**/*.ts",
@@ -28,10 +28,7 @@
   "exclude": [
     "node_modules",
     "dist",
+    "scripts",
     "web-ext-artifacts"
-  ],
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": "node"
-  }
+  ]
 }
