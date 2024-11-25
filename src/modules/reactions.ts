@@ -1,15 +1,14 @@
-import { getActualUserName } from "./users/user.module";
+import {getActualUserName} from "./users/user.module";
 import type {
-    ReactionConfig,
-    MessageReactions,
-    ParsedMessageReaction,
-    ParsedReactionData,
     AvailableReaction,
-    ReactionElements,
-    WebSocketMessage,
     BaseWebSocketMessage,
+    MessageReactions,
+    ReactionConfig,
+    ReactionData,
+    ReactionElements,
+    ReactionStateData,
     ReactionUpdateData,
-    ReactionStateData, ReactionData
+    WebSocketMessage
 } from '../../types/reactions.js';
 
 /**
@@ -24,6 +23,7 @@ class ReactionManager {
     private reconnectAttempts = 0;
     private messagesObserver?: MutationObserver;
     private checkInterval?: number;
+    private static messageCounter = 0;
 
     private readonly config: ReactionConfig = {
         maxReconnectAttempts: 5,
@@ -158,21 +158,28 @@ class ReactionManager {
      * @returns {string} Unique message identifier
      */
     private generateMessageId(container: HTMLElement): string {
-        const selectors = {
-            text: '[data-test="chatUserMessageText"]',
-            user: '[data-test="chatUserName"]',
-            timestamp: '[data-test="chatMessageTimestamp"]'
-        };
 
-        const elements = Object.entries(selectors).reduce((acc, [key, selector]) => ({
-            ...acc,
-            [key]: container.querySelector(selector)?.textContent || ''
-        }), {} as Record<keyof typeof selectors, string>);
+        const messageText = container.querySelector('p.sc-dmvcBB[data-test="chatUserMessageText"]')?.textContent?.trim() || '';
+        const user = container.querySelector('.sc-gFkHhu span')?.textContent?.trim() || '';
+        const timestamp = container.querySelector('time')?.getAttribute('datetime') || '';
 
-        const uniqueString = `${elements.user}-${elements.text}-${elements.timestamp}`;
-        return `msg-${btoa(encodeURIComponent(uniqueString))
-            .replace(/[^a-zA-Z0-9]/g, '')
-            .substring(0, 32)}`;
+        // Create a unique string from message content, user and timestamp
+        const uniqueString = JSON.stringify({
+            text: messageText,
+            user: user,
+            time: timestamp
+        });
+
+        // Create a hash from the unique string
+        let hash = 0;
+        for (let i = 0; i < uniqueString.length; i++) {
+            const char = uniqueString.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+
+        // Convert to unsigned 32-bit integer
+        return `msg-${Math.abs(hash).toString(36)}`;
     }
 
     /**
@@ -186,19 +193,17 @@ class ReactionManager {
             return 'unknown-session';
         }
 
-        // Utilisation d'une fonction de hachage simple pour générer un token cohérent
         const generateHash = (str: string): string => {
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
                 const char = str.charCodeAt(i);
                 hash = ((hash << 5) - hash) + char;
-                hash = hash & hash; // Conversion en 32 bits
+                hash = hash & hash; // Convert to 32bit integer
             }
-            // Conversion en hex et prise des 8 derniers caractères
+            // Convert to unsigned 32-bit integer
             return (hash >>> 0).toString(16).slice(-8);
         };
 
-        // Ajout d'un sel fixe pour renforcer la sécurité
         const SALT = "WWSNB_2024";
         const tokenBase = `${SALT}${sessionTitle}`;
 
@@ -257,8 +262,11 @@ class ReactionManager {
     private handleWebSocketMessage(event: MessageEvent): void {
         try {
             const data = JSON.parse(event.data) as ReactionData;
+            console.log('[WWSNB] Received WebSocket message:', data);
             if (data.type === 'update_reactions') {
-                this.updateReactionsState(data.reactions);
+                this.updateReactionsState(data.data.reactions);
+            } else {
+                console.warn('[WWSNB] Unknown WebSocket message type:', data.type);
             }
         } catch (error) {
             console.error('[WWSNB] Error handling WebSocket message:', error);
@@ -271,18 +279,18 @@ class ReactionManager {
      */
     private updateReactionsState(reactionsData: string): void {
         try {
-
             if (!reactionsData) {
                 console.log('[WWSNB] No reactions data received');
                 return;
             }
 
-            const parsedReactions = JSON.parse(reactionsData) as ParsedMessageReaction[];
+            const messageReactions = JSON.parse(reactionsData) as Record<string, Record<string, string[]>>;
 
+            // Convert the nested object to Map structure
             this.messageReactions = new Map(
-                parsedReactions.map((data: ParsedMessageReaction) => [
-                    data.messageId,
-                    new Map(data.reactions.map((r: ParsedReactionData) => [r.emoji, r.users]))
+                Object.entries(messageReactions).map(([messageId, reactions]) => [
+                    messageId,
+                    new Map(Object.entries(reactions))
                 ])
             );
 
@@ -444,7 +452,16 @@ class ReactionManager {
      * @param {HTMLElement} container Reactions container element
      */
     private updateReactionDisplay(messageId: string, container: HTMLElement): void {
-        this.clearContainer(container);
+        // S'assurer qu'on utilise le bon container
+        const reactionsContainer = container.classList.contains('reactions-container')
+            ? container
+            : container.querySelector('.reactions-container');
+
+        if (!reactionsContainer) {
+            console.error('[WWSNB] Reactions container not found');
+            return;
+        }
+
         const reactions = this.messageReactions.get(messageId) || new Map();
         const currentUserName = getActualUserName();
 
@@ -454,18 +471,26 @@ class ReactionManager {
             return;
         }
 
+        // Nettoyer le container existant
+        this.clearContainer(reactionsContainer);
+
+        // Ajouter les nouveaux badges
         for (const [emoji, users] of reactions) {
-            const badge = this.createReactionBadge(emoji, users, currentUserName);
-            badge.addEventListener('click', () => this.addReaction(messageId, emoji));
-            container.appendChild(badge);
+            if (users.length === 0) {
+                this.removeReactionBadge(emoji, reactionsContainer);
+            } else {
+                const badge = this.createReactionBadge(emoji, users, currentUserName);
+                badge.addEventListener('click', () => this.addReaction(messageId, emoji));
+                reactionsContainer.appendChild(badge);
+            }
         }
     }
 
     /**
      * Safely clears a container's contents
-     * @param {HTMLElement} container Container to clear
+     * @param {Element} container Container to clear
      */
-    private clearContainer(container: HTMLElement): void {
+    private clearContainer(container: Element): void {
         while (container.firstChild) {
             container.removeChild(container.firstChild);
         }
@@ -493,6 +518,22 @@ class ReactionManager {
         return badge;
     }
 
+    private removeReactionBadge(emoji: string, container: Element): void{
+
+        if (!container) return;
+
+        const badges = container.querySelectorAll('.reaction-badge');
+
+        badges.forEach(badge => {
+            const emojiElement = badge.querySelector('span');
+            if (emojiElement && emoji) {
+                if (emojiElement.textContent?.includes(emoji)) {
+                    badge.remove();
+                }
+            }
+        });
+    }
+
     /**
      * Creates an emoji element with count
      * @param {string} emoji Emoji character
@@ -513,8 +554,10 @@ class ReactionManager {
     private addReactionButton(messageContainer: HTMLElement): void {
         if (messageContainer.dataset.hasReactions === 'true') return;
 
-        const messageId = this.generateMessageId(messageContainer);
-        messageContainer.dataset.messageId = messageId;
+        if (!messageContainer.dataset.messageId) {
+            messageContainer.dataset.messageId = this.generateMessageId(messageContainer);
+        }
+        const messageId = messageContainer.dataset.messageId;
         messageContainer.dataset.hasReactions = 'true';
 
         const { reactionsWrapper, reactionsContainer } = this.createReactionElements();

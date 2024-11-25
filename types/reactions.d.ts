@@ -18,7 +18,9 @@ export type MessageReactions = Map<string, MessageReaction>;
 export interface ReactionData {
     type: 'update_reactions';
     sessionToken: string;
-    reactions: string;
+    data: {
+        reactions: string;
+    };
 }
 
 export interface ParsedReactionData {
