@@ -1,6 +1,6 @@
 {
   "name": "wwsnb",
-  "version": "0.2.0",
+  "version": "0.2.13",
   "type": "module",
   "description": "Retrieve functionality from Slippers for BBB.",
   "repository": "https://github.com/Teyk0o/wwsnb",
@@ -17,6 +17,7 @@
   "scripts": {
     "clean": "rimraf dist dist-scripts",
     "build": "webpack --mode=development",
+    "build:scripts": "webpack --config webpack.config.js --mode=production --env target=node-scripts",
     "build:prod": "webpack --mode=production",
     "dev": "webpack --watch --mode=development",
     "start": "web-ext run --source-dir ./dist/",

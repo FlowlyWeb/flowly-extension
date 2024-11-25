@@ -115,31 +115,47 @@ async function getCurrentVersion(): Promise<string> {
  */
 async function bumpVersion(type: VersionType): Promise<string> {
     const manifestPath = join(rootDir, 'manifest.json');
+    const packagePath = join(rootDir, 'package.json');
     let manifest: any;
+    let packageJson: any;
 
     try {
+        // Lire les deux fichiers
         manifest = JSON.parse(await readFile(manifestPath, 'utf-8'));
-        const currentVersion = manifest.version || '0.0.0';
+        packageJson = JSON.parse(await readFile(packagePath, 'utf-8'));
+
+        const currentVersion = manifest.version || packageJson.version || '0.0.0';
         const [major, minor, patch] = currentVersion.split('.').map(Number);
 
         if (isNaN(major) || isNaN(minor) || isNaN(patch)) {
             throw new Error(`Invalid version format: ${currentVersion}`);
         }
 
+        // Calculer la nouvelle version
+        let newVersion: string;
         switch (type) {
             case 'major':
-                manifest.version = `${major + 1}.0.0`;
+                newVersion = `${major + 1}.0.0`;
                 break;
             case 'minor':
-                manifest.version = `${major}.${minor + 1}.0`;
+                newVersion = `${major}.${minor + 1}.0`;
                 break;
             case 'patch':
-                manifest.version = `${major}.${minor}.${patch + 1}`;
+                newVersion = `${major}.${minor}.${patch + 1}`;
                 break;
         }
 
-        await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
-        return manifest.version;
+        // Mettre à jour les deux fichiers
+        manifest.version = newVersion;
+        packageJson.version = newVersion;
+
+        // Écrire les modifications
+        await Promise.all([
+            writeFile(manifestPath, JSON.stringify(manifest, null, 2)),
+            writeFile(packagePath, JSON.stringify(packageJson, null, 2))
+        ]);
+
+        return newVersion;
     } catch (error) {
         console.error(chalk.red('Error bumping version:'), error);
         throw error;
