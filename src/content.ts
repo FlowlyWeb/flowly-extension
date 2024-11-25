@@ -1,65 +1,53 @@
+import { setupMentions } from "./modules/mentions";
+import { reactionManager } from "./modules/reactions";
+import { checkNewMessages, observer } from "./utils/observer";
+
 /**
  * Initialize all WWSNB modules
  */
-function launchWWSNB() {
-    console.log('WWSNB by Théo Vilain successfully loaded');
-
-    // Create observer for new messages
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.addedNodes.length) {
-                checkNewMessages();
-            }
-        });
-    });
-
+const app = {
     // Configure observer settings
-    const config = {
+    config : {
         childList: true,
         subtree: true
-    };
+    },
 
-    // Start observing document for changes
-    observer.observe(document.body, config);
+    init: ()=> {
+        console.log('WWSNB by Théo Vilain successfully loaded');
 
-    /**
-     * Check new messages for questions and mentions
-     */
-    function checkNewMessages() {
-        const messages = document.querySelectorAll('[data-test="chatUserMessageText"]');
-        const actualUserName = getActualUserName();
 
-        messages.forEach(message => {
-            // Check for questions
-            if (message.textContent.includes('@question')) {
-                const messageContainer = message.closest('.sc-leYdVB');
-                if (messageContainer && !messageContainer.classList.contains('question-highlight')) {
-                    messageContainer.classList.add('question-highlight');
-                }
-            } else if (message.textContent.includes('@' + actualUserName)) {
-                const messageContainer = message.closest('.sc-leYdVB');
-                if (messageContainer && !messageContainer.classList.contains('mention-highlight')) {
-                    messageContainer.classList.add('mention-highlight');
-                }
-            }
-        });
+        // Start observing document for changes
+        observer.observe(document.body, app.config);
+        // Initialize all modules with a slight delay to ensure DOM is ready
+        setTimeout(() => {
+            console.log('[WWSNB] Starting modules initialization');
+            checkNewMessages();
+            setupMentions();
+            reactionManager.setup();
+            console.log('[WWSNB] Modules initialized successfully');
+        }, 1000);
+
+        // Add cleanup handlers
+        window.addEventListener('beforeunload', app.cleanup);
+        window.addEventListener('unload', app.cleanup);
+
+    },
+
+    cleanup: (event?: BeforeUnloadEvent | Event) => {
+        console.log('[WWSNB] Cleaning up...');
+
+        const isRefresh = event?.type === 'beforeunload';
+
+        observer.disconnect();
+        reactionManager.cleanup(isRefresh);
+
+        console.log('[WWSNB] Cleanup completed');
     }
-
-    // Initialize all modules with a slight delay to ensure DOM is ready
-    setTimeout(() => {
-        console.log('[WWSNB] Starting modules initialization');
-        checkNewMessages();
-        setupMentions();
-        setupReactions();
-        setupQuestions();
-        setupModerator();
-        console.log('[WWSNB] Modules initialized successfully');
-    }, 1000);
 }
 
 // Launch the application when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', launchWWSNB);
+    document.addEventListener('DOMContentLoaded', app.init);
 } else {
-    launchWWSNB();
+    app.init();
 }

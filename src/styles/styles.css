@@ -51,7 +51,6 @@
     border-left: 4px solid #ff9800 !important;
     padding: 8px !important;
     margin: 4px 0 !important;
-    border-radius: 4px !important;
 }
 
 .mention-highlight {
@@ -59,7 +58,6 @@
     border-left: 4px solid #2196f3 !important;
     padding: 8px !important;
     margin: 4px 0 !important;
-    border-radius: 4px !important;
 }
 
 /* Bouton de réaction */
@@ -188,7 +186,6 @@
     border-left: 4px solid #f44336 !important;
     padding: 8px !important;
     margin: 4px 0 !important;
-    border-radius: 4px !important;
 }
 
 .moderator-badge {
