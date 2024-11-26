@@ -10,6 +10,7 @@ import type {
     ReactionUpdateData,
     WebSocketMessage
 } from '../../types/reactions.js';
+import { forceReflow } from "../utils/chat";
 
 /**
  * Manages all reaction-related functionality using the Singleton pattern
@@ -243,7 +244,6 @@ class ReactionManager {
             console.log('[WWSNB] WebSocket connected');
             this.reconnectAttempts = 0;
             this.sendInitialState(sessionToken);
-            // Traiter la file d'attente après la reconnexion
             this.processQueue();
         };
 
@@ -262,11 +262,8 @@ class ReactionManager {
     private handleWebSocketMessage(event: MessageEvent): void {
         try {
             const data = JSON.parse(event.data) as ReactionData;
-            console.log('[WWSNB] Received WebSocket message:', data);
             if (data.type === 'update_reactions') {
                 this.updateReactionsState(data.data.reactions);
-            } else {
-                console.warn('[WWSNB] Unknown WebSocket message type:', data.type);
             }
         } catch (error) {
             console.error('[WWSNB] Error handling WebSocket message:', error);
@@ -280,7 +277,6 @@ class ReactionManager {
     private updateReactionsState(reactionsData: string): void {
         try {
             if (!reactionsData) {
-                console.log('[WWSNB] No reactions data received');
                 return;
             }
 
@@ -296,7 +292,7 @@ class ReactionManager {
 
             this.updateAllReactionDisplays();
         } catch (error) {
-            console.error('[WWSNB] Error updating reactions state:', error);
+            console.error('[WWSNB] Error updating reactions state.');
         }
     }
 
@@ -325,10 +321,9 @@ class ReactionManager {
     private handleReconnection(sessionToken: string): void {
         if (this.reconnectAttempts < this.config.maxReconnectAttempts) {
             this.reconnectAttempts++;
-            console.log(`[WWSNB] Attempting to reconnect (${this.reconnectAttempts}/${this.config.maxReconnectAttempts})...`);
             setTimeout(() => this.connectWebSocket(sessionToken), this.config.reconnectDelay);
         } else {
-            console.error('[WWSNB] Max reconnection attempts reached');
+            console.error('[WWSNB] Max reconnection attempts to WSS reached');
         }
     }
 
@@ -355,7 +350,7 @@ class ReactionManager {
             }
             this.updateAllReactionDisplays();
         } catch (error) {
-            console.error('[WWSNB] Error loading reactions:', error);
+            console.error('[WWSNB] Error loading reactions.');
             this.messageReactions = new Map();
         }
     }
@@ -414,23 +409,19 @@ class ReactionManager {
     private async addReaction(messageId: string, emoji: string): Promise<void> {
         const currentUserName = getActualUserName();
         if (!currentUserName) {
-            console.error('[WWSNB] User name is not defined');
             return;
         }
 
         const sessionId: string = this.getSessionToken();
 
         try {
-            // Envoyer la mise à jour au serveur d'abord
             await this.sendReactionUpdate(messageId, sessionId, emoji, currentUserName);
 
-            // La mise à jour locale se fait après la confirmation du serveur
             this.updateLocalReaction(messageId, emoji, currentUserName);
             this.updateMessageReactions(messageId);
             this.saveToLocalStorage(this.getSessionToken());
-            console.debug(`[WWSNB] Updated reaction: ${emoji} on message ${messageId}`);
         } catch (error) {
-            console.error('[WWSNB] Failed to update reaction:', error);
+            console.error('[WWSNB] Failed to update reaction.');
         }
     }
 
@@ -452,29 +443,23 @@ class ReactionManager {
      * @param {HTMLElement} container Reactions container element
      */
     private updateReactionDisplay(messageId: string, container: HTMLElement): void {
-        // S'assurer qu'on utilise le bon container
         const reactionsContainer = container.classList.contains('reactions-container')
             ? container
             : container.querySelector('.reactions-container');
 
         if (!reactionsContainer) {
-            console.error('[WWSNB] Reactions container not found');
             return;
         }
 
         const reactions = this.messageReactions.get(messageId) || new Map();
         const currentUserName = getActualUserName();
 
-        // Check if username is defined
         if (!currentUserName) {
-            console.error('[WWSNB] User name is not defined');
             return;
         }
 
-        // Nettoyer le container existant
         this.clearContainer(reactionsContainer);
 
-        // Ajouter les nouveaux badges
         for (const [emoji, users] of reactions) {
             if (users.length === 0) {
                 this.removeReactionBadge(emoji, reactionsContainer);
@@ -483,6 +468,13 @@ class ReactionManager {
                 badge.addEventListener('click', () => this.addReaction(messageId, emoji));
                 reactionsContainer.appendChild(badge);
             }
+        }
+
+        const messageContainer = document.querySelector<HTMLElement>(`[data-message-id="${messageId}"]`);
+        if (messageContainer) {
+            requestAnimationFrame(() => {
+                forceReflow(messageContainer);
+            });
         }
     }
 
@@ -684,11 +676,9 @@ class ReactionManager {
                 try {
                     await this.sendMessage(message);
                     await this.processQueue();
-                    console.debug('[WWSNB] Processed message from queue:', message);
                 } catch (error) {
-                    // En cas d'échec, remettre le message dans la file
                     this.messageQueue.unshift(message);
-                    console.error('[WWSNB] Failed to send message:', error);
+                    console.error('[WWSNB] Failed to send message to WSS.');
                 }
             }
         }
@@ -715,7 +705,6 @@ class ReactionManager {
 
         if (this.isConnectionReady()) {
             await this.sendMessage(message);
-            console.debug('[WWSNB] Sent reaction update:', message);
         } else {
             this.queueMessage(message);
         }
@@ -752,7 +741,6 @@ class ReactionManager {
 
             try {
                 this.ws!.send(JSON.stringify(message));
-                console.debug('[WWSNB] Sent message to WSS:', message);
                 clearTimeout(timeoutId);
                 resolve();
             } catch (error) {
@@ -810,7 +798,7 @@ class ReactionManager {
                 const sessionToken = this.getSessionToken();
                 this.saveToLocalStorage(sessionToken);
             } catch (error) {
-                console.error('[WWSNB] Failed to save state during refresh:', error);
+                console.error('[WWSNB] Failed to save state during refresh.');
             }
         } else {
             try {
