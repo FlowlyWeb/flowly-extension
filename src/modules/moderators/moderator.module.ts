@@ -1,9 +1,7 @@
 export function checkForModeratorMessages(message: HTMLElement) {
 
-    console.log('Checking for moderator messages');
-
     if (message.dataset.moderatorChecked === 'true') {
-        console.log('Already checked this message');
+        return;
     }
     message.dataset.moderatorChecked = 'true';
 
@@ -13,7 +11,6 @@ export function checkForModeratorMessages(message: HTMLElement) {
     // Look for moderator avatar
     const moderatorAvatar = parent.querySelector('[data-test="moderatorAvatar"]');
     if (moderatorAvatar) {
-        console.log('Found moderator message');
         addClassModerator(parent);
     }
 }
