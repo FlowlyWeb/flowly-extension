@@ -157,17 +157,17 @@ async function findLatestXpi(): Promise<string> {
     const files = await $`cd dist/web-ext-artifacts && ls *.xpi`;
     const xpiFiles = files.stdout.trim().split('\n');
     if (xpiFiles.length === 0) throw new Error('No XPI file found');
-    return "dist/web-ext-artifacts/" + xpiFiles[xpiFiles.length - 1];
+    return "dist/firefox/web-ext-artifacts/" + xpiFiles[xpiFiles.length - 1];
 }
 
 async function signExtension(): Promise<string> {
     console.log(chalk.blue('📝 Signing Firefox extension...'));
     try {
-        if (!fs.existsSync('dist')) {
-            fs.mkdirSync('dist', {recursive: true});
+        if (!fs.existsSync('dist/firefox')) {
+            fs.mkdirSync('dist/firefox', {recursive: true});
         }
 
-        await $`cd dist && npx web-ext sign --ignore-files="src/**" --ignore-files="scripts/**" --api-key=${process.env.AMO_JWT_ISSUER} --api-secret=${process.env.AMO_JWT_SECRET} --channel=unlisted`;
+        await $`cd dist/firefox && npx web-ext sign --ignore-files="src/**" --ignore-files="scripts/**" --api-key=${process.env.AMO_JWT_ISSUER} --api-secret=${process.env.AMO_JWT_SECRET} --channel=unlisted`;
 
         const xpiPath = await findLatestXpi();
         return xpiPath;

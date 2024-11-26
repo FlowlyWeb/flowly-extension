@@ -1,6 +1,6 @@
 {
   "name": "wwsnb",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Retrieve functionality from Slippers for BBB.",
   "repository": "https://github.com/Teyk0o/wwsnb",
@@ -26,6 +26,7 @@
     "release:major:chrome:no-git": "node --experimental-vm-modules dist-scripts/release.js major --no-git --browser=chrome",
     "release:firefox": "node --experimental-vm-modules dist-scripts/release.js patch --browser=firefox",
     "release:both": "node --experimental-vm-modules dist-scripts/release.js patch --browser=both",
+    "release:both:no-git": "node --experimental-vm-modules dist-scripts/release.js patch --no-git --browser=both",
     "dev": "webpack --watch --mode=development",
     "start": "web-ext run --source-dir ./dist/",
     "release": "node --experimental-vm-modules dist-scripts/release.js",
