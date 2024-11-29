@@ -44,14 +44,14 @@ export function selectSuggestion(suggestionItem: HTMLElement, input: HTMLInputEl
  * @param {number} atIndex Position of @
  */
 export function searchAndShowSuggestions(query: string, input: HTMLElement, atIndex: number) {
-    console.log('suggestionBoxElem:', suggestionBoxElem);
+
   const users = getCachedUsers();
   const suggestions = users.filter(user => user.name.toLowerCase().includes(query.toLowerCase()));
+
+  if (!suggestionBoxElem) return;
+
   // Clear existing suggestions
   suggestionBoxElem.innerHTML = '';
-  // Add new suggestions
-
-  console.log(suggestions);
 
   for (const user of suggestions) {
       const suggestionItem = document.createElement('div');
@@ -59,8 +59,6 @@ export function searchAndShowSuggestions(query: string, input: HTMLElement, atIn
       suggestionItem.textContent = user.name;
       suggestionBoxElem.appendChild(suggestionItem);
   }
-
-    console.log('input rect:', input.getBoundingClientRect());
 
     // Get the height of the suggestion box
     const suggestionsHeight = suggestionBoxElem.offsetHeight;
@@ -72,5 +70,4 @@ export function searchAndShowSuggestions(query: string, input: HTMLElement, atIn
   suggestionBoxElem.style.width = `${rect.width}px`;
   suggestionBoxElem.style.display = 'block';
 
-    console.log('Box style:', suggestionBoxElem.style.cssText);
 }
