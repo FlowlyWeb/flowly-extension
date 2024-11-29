@@ -48,6 +48,7 @@ export function searchAndShowSuggestions(query: string, input: HTMLElement, atIn
   const users = getCachedUsers();
   const suggestions = users.filter(user => user.name.toLowerCase().includes(query.toLowerCase()));
 
+  // Simple check to see if the suggestion box exists, but it's impossible to not have it
   if (!suggestionBoxElem) return;
 
   // Clear existing suggestions

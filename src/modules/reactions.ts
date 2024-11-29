@@ -509,6 +509,12 @@ class ReactionManager {
         return badge;
     }
 
+    /**
+     * Removes a reaction badge from a container
+     * @param emoji
+     * @param container
+     * @private
+     */
     private removeReactionBadge(emoji: string, container: Element): void{
 
         if (!container) return;

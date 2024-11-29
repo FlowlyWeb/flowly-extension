@@ -3,6 +3,9 @@ import { checkForModeratorMessages } from "../modules/moderators/moderator.modul
 import { checkForQuestions } from "../modules/question/question.module";
 import { checkForBadge } from "../modules/users/user.module";
 
+/**
+ * Create a new MutationObserver
+ */
 export const observer = new MutationObserver((mutations) => {
   for (const mutation of mutations) {
       if (mutation.addedNodes.length) {
@@ -11,7 +14,9 @@ export const observer = new MutationObserver((mutations) => {
   }
 });
 
-
+/**
+ * Check for new messages
+ */
 export function checkNewMessages() {
   // Get all messages using data-test attribute
   const messages = document.querySelectorAll('[data-test="chatUserMessageText"]') as unknown as HTMLElement[];
