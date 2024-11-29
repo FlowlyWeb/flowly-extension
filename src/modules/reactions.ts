@@ -24,13 +24,12 @@ class ReactionManager {
     private reconnectAttempts = 0;
     private messagesObserver?: MutationObserver;
     private checkInterval?: number;
-    private static messageCounter = 0;
 
     private readonly config: ReactionConfig = {
         maxReconnectAttempts: 5,
         reconnectDelay: 3000,
         checkInterval: 1000,
-        wsUrl: 'ws://localhost:3000/reactions'
+        wsUrl: process.env.NODE_ENV === 'development' ? 'ws://localhost:3000/reactions' : 'wss://api.theovilain.com/reactions'
     };
 
     private readonly availableReactions: AvailableReaction[] = [
@@ -129,7 +128,7 @@ class ReactionManager {
         clearTimeout(this.debounceTimeout);
         this.debounceTimeout = setTimeout(() => fn(), delay);
     }
-    private debounceTimeout?: number;
+    private debounceTimeout?: ReturnType<typeof setTimeout>;
 
     /**
      * Starts periodic checking for new messages that need reaction buttons
