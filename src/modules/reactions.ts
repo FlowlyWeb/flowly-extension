@@ -412,7 +412,6 @@ class ReactionManager {
         if (!currentUserName) {
             return;
         }
-    }
 
         const sessionId: string = this.getSessionToken();
 
