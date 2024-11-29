@@ -1,8 +1,9 @@
 # WWSNB - We Want Slippers Not BBB 🛋️
 
-![ESLint Badge](https://github.com/Teyk0o/wwsnb/actions/workflows/lint.yml/badge.svg)
+![ESLint Badge](https://github.com/Teyk0o/wwsnb/actions/workflows/lint.yml/badge.svg) ![WWSNB Server status](https://img.shields.io/uptimerobot/status/m798079281-2744b94467ea7e8881494d06)
 
-WWSNB est une extension Firefox qui améliore l'expérience de BigBlueButton pour les cours à distance de l'école O'Clock en ajoutant des fonctionnalités essentielles pour une meilleure communication.
+
+WWSNB est une extension Firefox et Chrome qui améliore l'expérience de BigBlueButton pour les cours à distance de l'école O'Clock en ajoutant des fonctionnalités essentielles pour une meilleure communication.
 
 ![BBB Oclock Extension](https://github.com/user-attachments/assets/ffc63b95-eb5a-456d-ac24-a71c7ce06824)
 

@@ -1,6 +1,6 @@
 {
   "name": "wwsnb",
-  "version": "0.2.14",
+  "version": "1.0.1",
   "type": "module",
   "description": "Retrieve functionality from Slippers for BBB.",
   "repository": "https://github.com/Teyk0o/wwsnb",
@@ -20,6 +20,13 @@
     "build": "webpack --mode=development",
     "build:scripts": "webpack --config webpack.config.js --mode=production --env target=node-scripts",
     "build:prod": "webpack --mode=production",
+    "build:firefox": "webpack --mode=production --env target=firefox",
+    "build:chrome": "webpack --mode=production --env target=chrome",
+    "release:chrome": "node --experimental-vm-modules dist-scripts/release.js patch --browser=chrome",
+    "release:major:chrome:no-git": "node --experimental-vm-modules dist-scripts/release.js major --no-git --browser=chrome",
+    "release:firefox": "node --experimental-vm-modules dist-scripts/release.js patch --browser=firefox",
+    "release:both": "node --experimental-vm-modules dist-scripts/release.js patch --browser=both",
+    "release:both:no-git": "node --experimental-vm-modules dist-scripts/release.js patch --no-git --browser=both",
     "dev": "webpack --watch --mode=development",
     "start": "web-ext run --source-dir ./dist/",
     "release": "node --experimental-vm-modules dist-scripts/release.js",
@@ -37,8 +44,9 @@
   "license": "ISC",
   "devDependencies": {
     "@eslint/js": "^9.15.0",
+    "@types/adm-zip": "^0.5.6",
     "@types/firefox-webext-browser": "^120.0.4",
-    "@types/node": "^20.10.0",
+    "@types/node": "^20.17.9",
     "@types/node-fetch": "^2.6.9",
     "assert": "^2.1.0",
     "buffer": "^6.0.3",
@@ -67,5 +75,8 @@
     "webpack": "^5.96.1",
     "webpack-cli": "^5.1.4",
     "zx": "^7.2.3"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16"
   }
 }

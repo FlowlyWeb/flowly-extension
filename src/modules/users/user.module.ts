@@ -1,4 +1,5 @@
 import type {User} from '../../../types/user';
+import { activeUserManager } from '../users/activeUsers.module'
 
 const CACHE_DURATION = 3000;
 
@@ -12,10 +13,8 @@ export function getCachedUsers(): User[] {
   const lastCacheTime = sessionLastCacheTime ? Number(sessionLastCacheTime) : 0;
   const now = Date.now();
   if (! sessionCachedUsers || ((now - lastCacheTime) > CACHE_DURATION)) {
-      console.log('Fetching users...');
       const getAllCachedUsers = getAllUsers();
       sessionStorage.setItem('cachedUsers', JSON.stringify(getAllCachedUsers));
-      console.log('Users fetched:', getAllCachedUsers);
       sessionStorage.setItem('lastCacheTime', String(now));
   }
   const getAllCachedUsers = JSON.parse(sessionStorage.getItem('cachedUsers') || '[]');
@@ -38,8 +37,11 @@ export function getAllUsers(): User[] {
   return uniqueUsers as User[];
 }
 
-  // Get users from the user list
-export function getUsersFromUserListItem() {
+/**
+ * Get the users from the user list
+ * @returns {User[]} Array of user objects with name, initials, and background color
+ */
+export function getUsersFromUserListItem(): User[] {
     const users = [];
     // Get users from the user list
     const userListItemElem = document.querySelectorAll('[data-test="userListItem"]') as unknown as HTMLElement[];
@@ -61,6 +63,10 @@ export function getUsersFromUserListItem() {
     return users;
 }
 
+/**
+ * Get the users from the chat messages
+ * @returns {User[]} Array of user objects with name, initials, and background color
+ */
 export function getUserFromDataMessageID(): User[]{
     const users: User[] = [];
     const dataMessageID = document.querySelectorAll('[data-message-id]') as unknown as HTMLElement[];
@@ -86,7 +92,7 @@ export function getUserFromDataMessageID(): User[]{
   
 }
 
-  /**
+/**
  * Generate initials from a user's name
  * @param {string} name The user's full name
  * @returns {string} The user's initials in uppercase
@@ -123,19 +129,81 @@ export function cleanUsername(name:string):string {
       .trim();                                // Remove extra spaces
 }
 
-export function getActualUserName() {
+/**
+ * Get the current user's name from the UI
+ * @returns {string} The current user's name
+ * @returns {undefined} If the username is not found
+ */
+export function getActualUserName(): string | undefined {
   const userElement = document.querySelector('[aria-label*="Vous"]');
   if (!userElement) return;
 
   const ariaLabel = userElement.getAttribute('aria-label');
   if (!ariaLabel) return;
 
-  // Extrait tout ce qui se trouve avant " Vous"
   const fullNameMatch = ariaLabel.match(/(.+?)\s*Vous/);
   if (!fullNameMatch) {
       return;
   }
 
-  // Retourne le nom complet trouvé
   return cleanUsername(fullNameMatch[1].trim());
+}
+
+/**
+ * Check if a message has a badge and add it if it doesn't
+ * @param message The message element to check
+ */
+export function checkForBadge(message: HTMLElement) {
+    const messageContainer = message.closest('[data-test="msgListItem"]');
+    const usernameElement = messageContainer?.querySelector('.sc-gFkHhu.irZbhS span') as HTMLElement;
+
+    if (usernameElement) {
+        const username = usernameElement.innerText || 'unknown user';
+
+        const badge = document.createElement('img');
+        badge.style.height = '12px';
+        badge.style.marginLeft = '2px';
+        badge.style.paddingTop = '1px';
+
+        const isActiveUser = activeUserManager.getUserStatus(username);
+        const isModerator = checkIfModerator(message);
+
+        switch (isActiveUser) {
+            case 'contributor':
+                if (isModerator) {
+                    badge.src = 'https://i.ibb.co/6sTGv5H/wwsnb-moderator-badge.png';
+                    badge.title = 'Modérateur et Contributeur WWSNB';
+                    break;
+                }
+                badge.src = 'https://i.ibb.co/ZJcNFK0/wwsnb-contributor-badge.png';
+                badge.title = 'Contributeur WWSNB';
+                break;
+            case 'active':
+                if (isModerator) {
+                    badge.src = 'https://i.ibb.co/6sTGv5H/wwsnb-moderator-badge.png';
+                    badge.title = 'Modérateur et Utilisateur WWSNB';
+                    break;
+                }
+                badge.src = 'https://i.ibb.co/LvCh2Rp/wwsnb-user-badge.png';
+                badge.title = 'Utilisateur WWSNB';
+                break;
+            default:
+                break;
+        }
+
+        message.dataset.badgeChecked = "true";
+
+        usernameElement.insertAdjacentElement('afterend', badge);
+    }
+}
+
+/**
+ * Check if a message has a badge and add it if it doesn't
+ * @param message The message element to check
+ */
+export function checkIfModerator(message: HTMLElement): boolean {
+    const parent = message.closest('[role="listitem"]') as HTMLElement;
+
+    const moderatorAvatar = parent.querySelector('[data-test="moderatorAvatar"]');
+    return !!moderatorAvatar;
 }

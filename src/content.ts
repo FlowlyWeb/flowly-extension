@@ -1,5 +1,6 @@
 import { setupMentions } from "./modules/mentions";
 import { reactionManager } from "./modules/reactions";
+import { activeUserManager} from "./modules/users/activeUsers.module";
 import { checkNewMessages, observer } from "./utils/observer";
 
 /**
@@ -15,15 +16,16 @@ const app = {
     init: ()=> {
         console.log('WWSNB by Théo Vilain successfully loaded');
 
-
         // Start observing document for changes
         observer.observe(document.body, app.config);
+      
         // Initialize all modules with a slight delay to ensure DOM is ready
         setTimeout(() => {
             console.log('[WWSNB] Starting modules initialization');
             checkNewMessages();
             setupMentions();
             reactionManager.setup();
+            activeUserManager.setup();
             console.log('[WWSNB] Modules initialized successfully');
         }, 1000);
 
@@ -40,6 +42,7 @@ const app = {
 
         observer.disconnect();
         reactionManager.cleanup(isRefresh);
+        activeUserManager.cleanup(isRefresh);
 
         console.log('[WWSNB] Cleanup completed');
     }
