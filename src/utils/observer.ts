@@ -1,6 +1,7 @@
 import { checkForMentions } from "../modules/mentions/mention.module";
 import { checkForModeratorMessages } from "../modules/moderators/moderator.module";
 import { checkForQuestions } from "../modules/question/question.module";
+import { checkForBadge } from "../modules/users/user.module";
 
 export const observer = new MutationObserver((mutations) => {
   for (const mutation of mutations) {
@@ -27,6 +28,10 @@ export function checkNewMessages() {
     // Check for moderator messages
     checkForModeratorMessages(message);
 
+    if (message.dataset.badgeChecked !== "true") {
+        // Check for badges
+        checkForBadge(message);
+    }
 
   }
 

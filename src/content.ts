@@ -1,5 +1,6 @@
 import { setupMentions } from "./modules/mentions";
 import { reactionManager } from "./modules/reactions";
+import { activeUserManager} from "./modules/users/activeUsers.module";
 import { checkNewMessages, observer } from "./utils/observer";
 
 /**
@@ -24,6 +25,7 @@ const app = {
             checkNewMessages();
             setupMentions();
             reactionManager.setup();
+            activeUserManager.setup();
             console.log('[WWSNB] Modules initialized successfully');
         }, 1000);
 
@@ -40,6 +42,7 @@ const app = {
 
         observer.disconnect();
         reactionManager.cleanup(isRefresh);
+        activeUserManager.cleanup(isRefresh);
 
         console.log('[WWSNB] Cleanup completed');
     }
