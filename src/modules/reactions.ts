@@ -32,6 +32,7 @@ class ReactionManager {
         wsUrl: process.env.NODE_ENV === 'development' ? 'ws://localhost:3000/reactions' : 'wss://api.theovilain.com/reactions'
     };
 
+
     private readonly availableReactions: AvailableReaction[] = [
         '👍', '❤️', '😂', '😮', '😢', '😡',
         '🎉', '🤔', '👀', '🔥', '✨', '👎'
@@ -228,6 +229,8 @@ class ReactionManager {
             this.ws.close();
         }
 
+        console.log(this.config.wsUrl)
+
         this.ws = new WebSocket(this.config.wsUrl);
         this.setupWebSocketHandlers(sessionToken);
     }
@@ -409,7 +412,6 @@ class ReactionManager {
         if (!currentUserName) {
             return;
         }
-    }
 
         const sessionId: string = this.getSessionToken();
 
