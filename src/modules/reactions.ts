@@ -30,7 +30,7 @@ class ReactionManager {
         maxReconnectAttempts: 5,
         reconnectDelay: 3000,
         checkInterval: 1000,
-        wsUrl: 'wss://api.theovilain.com/reactions'
+        wsUrl: 'ws://localhost:3000/reactions'
     };
 
     private readonly availableReactions: AvailableReaction[] = [
@@ -241,7 +241,7 @@ class ReactionManager {
         if (!this.ws) return;
 
         this.ws.onopen = () => {
-            console.log('[WWSNB] WebSocket connected');
+            console.log('[WWSNB] WebSocket connected for Message Reactions Module');
             this.reconnectAttempts = 0;
             this.sendInitialState(sessionToken);
             this.processQueue();

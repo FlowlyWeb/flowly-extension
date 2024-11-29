@@ -1,4 +1,5 @@
 import type {User} from '../../../types/user';
+import { activeUserManager } from '../users/activeUsers.module'
 
 const CACHE_DURATION = 3000;
 
@@ -12,10 +13,8 @@ export function getCachedUsers(): User[] {
   const lastCacheTime = sessionLastCacheTime ? Number(sessionLastCacheTime) : 0;
   const now = Date.now();
   if (! sessionCachedUsers || ((now - lastCacheTime) > CACHE_DURATION)) {
-      console.log('Fetching users...');
       const getAllCachedUsers = getAllUsers();
       sessionStorage.setItem('cachedUsers', JSON.stringify(getAllCachedUsers));
-      console.log('Users fetched:', getAllCachedUsers);
       sessionStorage.setItem('lastCacheTime', String(now));
   }
   const getAllCachedUsers = JSON.parse(sessionStorage.getItem('cachedUsers') || '[]');
@@ -138,4 +137,61 @@ export function getActualUserName() {
 
   // Retourne le nom complet trouvé
   return cleanUsername(fullNameMatch[1].trim());
+}
+
+export function checkForBadge(message: HTMLElement) {
+    let username = '';
+    // Remonter dans le DOM pour trouver le parent contenant le username
+    const messageContainer = message.closest('[data-test="msgListItem"]');
+    const usernameElement = messageContainer?.querySelector('.sc-gFkHhu.irZbhS span') as HTMLElement;
+
+    if (usernameElement) {
+        username = usernameElement.innerText || 'unknown user';
+
+        // Create badge element
+        const badge = document.createElement('img');
+        badge.style.height = '12px';
+        badge.style.marginLeft = '2px';
+        badge.style.paddingTop = '1px';
+
+        const isActiveUser = activeUserManager.getUserStatus(username);
+        const isModerator = checkIfModerator(message);
+
+        switch (isActiveUser) {
+            case 'contributor':
+                if (isModerator) {
+                    badge.src = 'https://i.ibb.co/6sTGv5H/wwsnb-moderator-badge.png';
+                    badge.title = 'Modérateur et Contributeur WWSNB';
+                    break;
+                }
+                badge.src = 'https://i.ibb.co/ZJcNFK0/wwsnb-contributor-badge.png';
+                badge.title = 'Contributeur WWSNB';
+                break;
+            case 'active':
+                if (isModerator) {
+                    badge.src = 'https://i.ibb.co/6sTGv5H/wwsnb-moderator-badge.png';
+                    badge.title = 'Modérateur et Utilisateur WWSNB';
+                    break;
+                }
+                badge.src = 'https://i.ibb.co/LvCh2Rp/wwsnb-user-badge.png';
+                badge.title = 'Utilisateur WWSNB';
+                break;
+            default:
+                break; // Pas de badge pour les autres cas
+        }
+
+        message.dataset.badgeChecked = "true";
+
+        // Insert badge after username
+        usernameElement.insertAdjacentElement('afterend', badge);
+    }
+}
+
+export function checkIfModerator(message: HTMLElement): boolean {
+    // Get parent with role="listitem"
+    const parent = message.closest('[role="listitem"]') as HTMLElement;
+
+    // Look for moderator avatar
+    const moderatorAvatar = parent.querySelector('[data-test="moderatorAvatar"]');
+    return !!moderatorAvatar;
 }
