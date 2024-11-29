@@ -24,7 +24,7 @@ class ActiveUserManager {
         maxReconnectAttempts: 5,
         reconnectDelay: 3000,
         checkInterval: 1000,
-        wsUrl: 'ws://localhost:3000/active-users'
+        wsUrl: process.env.NODE_ENV === 'development' ? 'ws://localhost:3000/active-users' : 'wss://api.theovilain.com/active-users'
     };
 
     private constructor() {}

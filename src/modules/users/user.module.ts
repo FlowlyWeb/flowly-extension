@@ -140,13 +140,12 @@ export function getActualUserName() {
 }
 
 export function checkForBadge(message: HTMLElement) {
-    let username = '';
     // Remonter dans le DOM pour trouver le parent contenant le username
     const messageContainer = message.closest('[data-test="msgListItem"]');
     const usernameElement = messageContainer?.querySelector('.sc-gFkHhu.irZbhS span') as HTMLElement;
 
     if (usernameElement) {
-        username = usernameElement.innerText || 'unknown user';
+        const username = usernameElement.innerText || 'unknown user';
 
         // Create badge element
         const badge = document.createElement('img');

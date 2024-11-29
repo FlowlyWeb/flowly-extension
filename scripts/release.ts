@@ -4,7 +4,6 @@ import {dirname, join} from 'path';
 import {fileURLToPath} from 'url';
 import {config} from 'dotenv';
 import * as fs from 'node:fs';
-import {existsSync} from 'node:fs';
 import AdmZip from "adm-zip";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
