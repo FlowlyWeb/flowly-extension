@@ -18,7 +18,7 @@ const app = {
 
         // Start observing document for changes
         observer.observe(document.body, app.config);
-
+      
         // Initialize all modules with a slight delay to ensure DOM is ready
         setTimeout(() => {
             console.log('[WWSNB] Starting modules initialization');

@@ -70,5 +70,4 @@ export function searchAndShowSuggestions(query: string, input: HTMLElement, atIn
   suggestionBoxElem.style.top = `${rect.top - suggestionsHeight}px`;
   suggestionBoxElem.style.width = `${rect.width}px`;
   suggestionBoxElem.style.display = 'block';
-
 }

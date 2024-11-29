@@ -309,7 +309,6 @@ class ReactionManager {
                 reactions: JSON.stringify(Array.from(this.messageReactions.entries()))
             }
         };
-
         this.ws.send(JSON.stringify(message));
     }
 
@@ -410,6 +409,7 @@ class ReactionManager {
         if (!currentUserName) {
             return;
         }
+    }
 
         const sessionId: string = this.getSessionToken();
 
