@@ -41,18 +41,24 @@ export interface GetUsersMessage {
 
 export interface HeartbeatMessage {
     type: 'heartbeat';
+    username?: string;
+    sessionId?: string;
+}
+
+export interface HeartbeatResponse {
+    type: 'pong';
 }
 
 export interface ActiveUsersResponse {
     type: 'userLists' | 'userListsUpdate' | 'activeUsers';
     data?: {
         users: Array<{
-            id: string;
+            sessionId: string;  // Changé de 'id' à 'sessionId'
             name: string;
             lastSeen: number;
         }>;
         collaborators: Array<{
-            id: string;
+            sessionId: string;  // Changé de 'id' à 'sessionId'
             name: string;
             lastSeen: number;
         }>;
@@ -63,7 +69,7 @@ export interface ActiveUsersResponse {
         success: boolean;
         data: {
             users: Array<{
-                id: string;
+                sessionId: string;  // Changé de 'id' à 'sessionId'
                 name: string;
                 lastSeen: number;
             }>;
@@ -103,6 +109,7 @@ export type UserWebSocketMessage =
     | UnregisterUserMessage
     | GetUsersMessage
     | HeartbeatMessage
+    | HeartbeatResponse
     | ActiveUsersResponse
     | RegisterUserSuccessResponse
     | ErrorResponse

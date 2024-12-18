@@ -29,9 +29,8 @@ class ReactionManager {
         maxReconnectAttempts: 5,
         reconnectDelay: 3000,
         checkInterval: 1000,
-        wsUrl: 'wss://api.theovilain.com/reactions'
+        wsUrl: 'wss://api.theovilain.com/active-users'
     };
-
 
     private readonly availableReactions: AvailableReaction[] = [
         '👍', '❤️', '😂', '😮', '😢', '😡',

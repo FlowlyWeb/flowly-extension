@@ -1,11 +1,14 @@
 import {
     ActiveUser,
-    GithubContributor,
+    activeUserConfig,
     ActiveUsersResponse,
-    UserWebSocketMessage,
-    activeUserConfig, RegisterUserMessage, GetUsersMessage, UnregisterUserMessage, UserMessage
+    GetUsersMessage,
+    GithubContributor,
+    UnregisterUserMessage,
+    UserMessage,
+    UserWebSocketMessage
 } from "../../../types/activeUsers";
-import { getActualUserName } from "./user.module";
+import {getActualUserName} from "./user.module";
 
 /**
  * ActiveUserManager class
@@ -19,9 +22,9 @@ class ActiveUserManager {
     private heartbeatInterval?: ReturnType<typeof setInterval>;
     private activeUsers: Map<string, ActiveUser> = new Map();
     private githubContributors: GithubContributor[] = [];
-    private readonly UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
+    private readonly UPDATE_INTERVAL = 10 * 1000; // 10 secondes
     private updateInterval?: ReturnType<typeof setInterval>;
-    private readonly HEARTBEAT_INTERVAL = 30000;
+    private readonly HEARTBEAT_INTERVAL = 5000; // 5 secondes
 
     // Settings for websocket connection
     private readonly config: activeUserConfig = {
@@ -97,7 +100,13 @@ class ActiveUserManager {
     private setupHeartbeat(): void {
         this.heartbeatInterval = setInterval(() => {
             if (this.ws?.readyState === WebSocket.OPEN) {
-                this.ws.send(JSON.stringify({ type: 'heartbeat' }));
+                const username = getActualUserName();
+                const sessionId = this.getSessionId();
+                this.ws.send(JSON.stringify({
+                    type: 'heartbeat',
+                    username,
+                    sessionId
+                }));
             }
         }, this.HEARTBEAT_INTERVAL);
     }
@@ -190,6 +199,9 @@ class ActiveUserManager {
                 case 'getUserListsError':
                     console.error('[Flowly] Server error:', data.payload?.error || data.message);
                     break;
+                case 'pong':
+                    this.requestActiveUsers();
+                    break;
                 default:
                     break;
             }
@@ -211,7 +223,7 @@ class ActiveUserManager {
                 this.activeUsers.set(user.name, {
                     name: user.name,
                     lastSeen: user.lastSeen,
-                    sessionId: user.id
+                    sessionId: user.sessionId
                 });
             });
         }
@@ -220,7 +232,7 @@ class ActiveUserManager {
                 this.activeUsers.set(user.name, {
                     name: user.name,
                     lastSeen: user.lastSeen,
-                    sessionId: user.id
+                    sessionId: user.sessionId
                 });
             });
         }

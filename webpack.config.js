@@ -44,7 +44,7 @@ function createBrowserConfig(target) {
                 patterns: [
                     {
                         from: "src/styles",
-                        to: "styles"
+                        to: "."
                     },
                     {
                         from: "icons",

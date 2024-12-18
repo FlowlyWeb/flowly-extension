@@ -2,6 +2,7 @@ import type {User} from '../../../types/user';
 import { activeUserManager } from '../users/activeUsers.module'
 
 const CACHE_DURATION = 3000;
+let cachedUsername: string | undefined;
 
 /**
  * Get cached users or fetch new ones if cache is expired
@@ -135,18 +136,32 @@ export function cleanUsername(name:string):string {
  * @returns {undefined} If the username is not found
  */
 export function getActualUserName(): string | undefined {
-  const userElement = document.querySelector('[aria-label*="Vous"]');
-  if (!userElement) return;
+    // Si on a déjà trouvé le username, on le retourne
+    if (cachedUsername) {
+        return cachedUsername;
+    }
 
-  const ariaLabel = userElement.getAttribute('aria-label');
-  if (!ariaLabel) return;
+    const userElement = document.querySelector('[aria-label*="Vous"]');
+    if (!userElement) {
+        console.debug('[Flowly] Could not find username element'); // Changé en debug au lieu d'error
+        return undefined;
+    }
 
-  const fullNameMatch = ariaLabel.match(/(.+?)\s*Vous/);
-  if (!fullNameMatch) {
-      return;
-  }
+    const ariaLabel = userElement.getAttribute('aria-label');
+    if (!ariaLabel) {
+        console.debug('[Flowly] No aria-label found');
+        return undefined;
+    }
 
-  return cleanUsername(fullNameMatch[1].trim());
+    const fullNameMatch = ariaLabel.match(/(.+?)\s*Vous/);
+    if (!fullNameMatch) {
+        console.debug('[Flowly] Could not extract username from aria-label');
+        return undefined;
+    }
+
+    // On met en cache le username trouvé
+    cachedUsername = cleanUsername(fullNameMatch[1].trim());
+    return cachedUsername;
 }
 
 /**
