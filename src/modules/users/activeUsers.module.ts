@@ -207,7 +207,6 @@ class ActiveUserManager {
         this.activeUsers.clear();
 
         if ('payload' in data && data.payload?.data?.users) {
-            console.log('[Flowly] Processing payload.data.users:', data.payload.data.users);
             data.payload.data.users.forEach(user => {
                 this.activeUsers.set(user.name, {
                     name: user.name,
@@ -217,7 +216,6 @@ class ActiveUserManager {
             });
         }
         else if (data.data?.users) {
-            console.log('[Flowly] Processing data.users:', data.data.users);
             data.data.users.forEach(user => {
                 this.activeUsers.set(user.name, {
                     name: user.name,
@@ -227,7 +225,6 @@ class ActiveUserManager {
             });
         }
         else if (data.users) {
-            console.log('[Flowly] Processing users array:', data.users);
             data.users.forEach(username => {
                 this.activeUsers.set(username, {
                     name: username,
@@ -240,14 +237,10 @@ class ActiveUserManager {
             console.warn('[Flowly] No users data found in response:', data);
         }
 
-        console.log('[Flowly] Contributeurs actuels:', this.githubContributors);
-
         if ('payload' in data && data.payload?.data?.collaborators) {
-            console.log('[Flowly] Setting contributors from payload:', data.payload.data.collaborators);
             this.githubContributors = data.payload.data.collaborators;
         }
         else if (data.githubContributors) {
-            console.log('[Flowly] Setting contributors directly:', data.githubContributors);
             this.githubContributors = data.githubContributors;
         }
     }
