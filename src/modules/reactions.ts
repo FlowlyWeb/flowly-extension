@@ -29,7 +29,7 @@ class ReactionManager {
         maxReconnectAttempts: 5,
         reconnectDelay: 3000,
         checkInterval: 1000,
-        wsUrl: process.env.NODE_ENV === 'development' ? 'ws://localhost:3000/reactions' : 'wss://api.theovilain.com/reactions'
+        wsUrl: 'wss://api.theovilain.com/reactions'
     };
 
 
@@ -59,7 +59,7 @@ class ReactionManager {
      * Sets up observers, periodic checks, and WebSocket connection
      */
     public setup(): void {
-        console.log('[WWSNB] Initializing message reactions module');
+        console.log('[Flowly] Initializing message reactions module');
         this.setupObserver();
         this.startPeriodicCheck();
         this.checkAndAddReactionButtons();
@@ -190,7 +190,6 @@ class ReactionManager {
     private getSessionToken(): string {
         const sessionTitle = document.querySelector('[data-test="presentationTitle"]')?.textContent;
         if (!sessionTitle) {
-            console.error('[WWSNB] Session not found');
             return 'unknown-session';
         }
 
@@ -205,7 +204,7 @@ class ReactionManager {
             return (hash >>> 0).toString(16).slice(-8);
         };
 
-        const SALT = "WWSNB_2024";
+        const SALT = "Flowly_2024";
         const tokenBase = `${SALT}${sessionTitle}`;
 
         return generateHash(tokenBase);
@@ -229,8 +228,6 @@ class ReactionManager {
             this.ws.close();
         }
 
-        console.log(this.config.wsUrl)
-
         this.ws = new WebSocket(this.config.wsUrl);
         this.setupWebSocketHandlers(sessionToken);
     }
@@ -243,7 +240,6 @@ class ReactionManager {
         if (!this.ws) return;
 
         this.ws.onopen = () => {
-            console.log('[WWSNB] WebSocket connected for Message Reactions Module');
             this.reconnectAttempts = 0;
             this.sendInitialState(sessionToken);
             this.processQueue();
@@ -252,7 +248,7 @@ class ReactionManager {
         this.ws.onmessage = this.handleWebSocketMessage.bind(this);
         this.ws.onclose = () => this.handleReconnection(sessionToken);
         this.ws.onerror = (error) => {
-            console.error('[WWSNB] WebSocket error:', (error as ErrorEvent).message || 'Unknown error');
+            console.error('[Flowly] WebSocket error:', (error as ErrorEvent).message || 'Unknown error');
             this.handleReconnection(sessionToken);
         };
     }
@@ -268,7 +264,7 @@ class ReactionManager {
                 this.updateReactionsState(data.data.reactions);
             }
         } catch (error) {
-            console.error('[WWSNB] Error handling WebSocket message:', error);
+            console.error('[Flowly] Error handling WebSocket message:', error);
         }
     }
 
@@ -294,7 +290,7 @@ class ReactionManager {
 
             this.updateAllReactionDisplays();
         } catch (error) {
-            console.error('[WWSNB] Error updating reactions state.');
+            console.error('[Flowly] Error updating reactions state.');
         }
     }
 
@@ -323,8 +319,6 @@ class ReactionManager {
         if (this.reconnectAttempts < this.config.maxReconnectAttempts) {
             this.reconnectAttempts++;
             setTimeout(() => this.connectWebSocket(sessionToken), this.config.reconnectDelay);
-        } else {
-            console.error('[WWSNB] Max reconnection attempts to WSS reached');
         }
     }
 
@@ -334,7 +328,7 @@ class ReactionManager {
      */
     private loadReactionsFromStorage(sessionToken: string): void {
         try {
-            const storageKey = `wwsnb_reactions_${sessionToken}`;
+            const storageKey = `flowly_reactions_${sessionToken}`;
             const saved = localStorage.getItem(storageKey);
 
             if (saved) {
@@ -351,7 +345,7 @@ class ReactionManager {
             }
             this.updateAllReactionDisplays();
         } catch (error) {
-            console.error('[WWSNB] Error loading reactions.');
+            console.error('[Flowly] Error loading reactions.');
             this.messageReactions = new Map();
         }
     }
@@ -360,7 +354,7 @@ class ReactionManager {
      * Saves reactions to localStorage
      */
     private saveToLocalStorage(sessionToken: string): void {
-        const storageKey = `wwsnb_reactions_${sessionToken}`;
+        const storageKey = `flowly_reactions_${sessionToken}`;
         const reactionsObj = Object.fromEntries(
             Array.from(this.messageReactions.entries()).map(([messageId, reactions]) => [
                 messageId,
@@ -422,7 +416,7 @@ class ReactionManager {
             this.updateMessageReactions(messageId);
             this.saveToLocalStorage(this.getSessionToken());
         } catch (error) {
-            console.error('[WWSNB] Failed to update reaction.');
+            console.error('[Flowly] Failed to update reaction.');
         }
     }
 
@@ -685,7 +679,6 @@ class ReactionManager {
                     await this.processQueue();
                 } catch (error) {
                     this.messageQueue.unshift(message);
-                    console.error('[WWSNB] Failed to send message to WSS.');
                 }
             }
         }
@@ -805,13 +798,13 @@ class ReactionManager {
                 const sessionToken = this.getSessionToken();
                 this.saveToLocalStorage(sessionToken);
             } catch (error) {
-                console.error('[WWSNB] Failed to save state during refresh.');
+                console.error('[Flowly] Failed to save state during refresh.');
             }
         } else {
             try {
-                localStorage.removeItem(`wwsnb_reactions_${this.getSessionToken()}`);
+                localStorage.removeItem(`flowly_reactions_${this.getSessionToken()}`);
             } catch (error) {
-                console.error('[WWSNB] Failed to clean localStorage:', error);
+                console.error('[Flowly] Failed to clean localStorage:', error);
             }
         }
     }

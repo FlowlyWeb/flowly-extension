@@ -1,13 +1,13 @@
 {
-  "name": "wwsnb",
+  "name": "flowly",
   "version": "1.0.1",
   "type": "module",
   "description": "Retrieve functionality from Slippers for BBB.",
-  "repository": "https://github.com/Teyk0o/wwsnb",
+  "repository": "https://github.com/FlowlyWeb/flowly-extension",
   "bugs": {
-    "url": "https://github.com/Teyk0o/wwsnb/issues"
+    "url": "https://github.com/FlowlyWeb/flowly-extension/issues"
   },
-  "homepage": "https://wwsnb.theovilain.com/",
+  "homepage": "https://flowly.theovilain.com/",
   "keywords": [
     "oclock",
     "school",

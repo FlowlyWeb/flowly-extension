@@ -19,24 +19,91 @@ export interface GithubContributor {
     github_username: string;
 }
 
+export interface RegisterUserMessage {
+    type: 'registerUser';
+    payload: {
+        id: string;
+        name: string;
+    };
+}
+
+export interface UnregisterUserMessage {
+    type: 'unregisterUser';
+    payload: {
+        id: string;
+        name: string;
+    };
+}
+
+export interface GetUsersMessage {
+    type: 'getUserLists';
+}
+
+export interface HeartbeatMessage {
+    type: 'heartbeat';
+}
+
+export interface ActiveUsersResponse {
+    type: 'userLists' | 'userListsUpdate' | 'activeUsers';
+    data?: {
+        users: Array<{
+            id: string;
+            name: string;
+            lastSeen: number;
+        }>;
+        collaborators: Array<{
+            id: string;
+            name: string;
+            lastSeen: number;
+        }>;
+    };
+    users?: string[];
+    githubContributors?: GithubContributor[];
+    payload?: {
+        success: boolean;
+        data: {
+            users: Array<{
+                id: string;
+                name: string;
+                lastSeen: number;
+            }>;
+            collaborators: Array<any>;
+        };
+    };
+}
+
+export interface RegisterUserSuccessResponse {
+    type: 'registerUserSuccess';
+    payload: {
+        success: boolean;
+        user: {
+            id: string;
+            name: string;
+        };
+    };
+}
+
+export interface ErrorResponse {
+    type: 'error' | 'registerUserError' | 'getUserListsError';
+    payload?: {
+        success: false;
+        error: string;
+    };
+    message?: string;
+}
+
 export interface UserMessage {
-    type: 'register' | 'unregister' | 'getUsers' | 'pong';
+    type: 'register' | 'unregister' | 'getUsers';
     username?: string;
     sessionId?: string;
 }
 
-export interface ActiveUsersResponse {
-    type: 'activeUsers';
-    users: string[];
-    githubContributors: GithubContributor[];
-}
-
-export interface ErrorResponse {
-    type: 'error';
-    message: string;
-}
-
 export type UserWebSocketMessage =
-    | UserMessage
+    | RegisterUserMessage
+    | UnregisterUserMessage
+    | GetUsersMessage
+    | HeartbeatMessage
     | ActiveUsersResponse
-    | ErrorResponse;
+    | RegisterUserSuccessResponse
+    | ErrorResponse
+    | UserMessage;

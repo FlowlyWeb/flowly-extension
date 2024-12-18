@@ -52,13 +52,7 @@ function createBrowserConfig(target) {
                     },
                     {
                         from: `manifest.${target}.json`,
-                        to: "manifest.json",
-                        transform(content) {
-                            const manifest = JSON.parse(content);
-                            manifest.content_scripts[0].js = ['content.js'];
-                            manifest.content_scripts[0].css = ['styles/styles.css'];
-                            return JSON.stringify(manifest, null, 2);
-                        }
+                        to: "manifest.json"
                     }
                 ],
             })

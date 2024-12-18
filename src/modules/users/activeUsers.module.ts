@@ -1,10 +1,9 @@
 import {
     ActiveUser,
     GithubContributor,
-    UserMessage,
     ActiveUsersResponse,
     UserWebSocketMessage,
-    activeUserConfig
+    activeUserConfig, RegisterUserMessage, GetUsersMessage, UnregisterUserMessage, UserMessage
 } from "../../../types/activeUsers";
 import { getActualUserName } from "./user.module";
 
@@ -29,7 +28,7 @@ class ActiveUserManager {
         maxReconnectAttempts: 5,
         reconnectDelay: 3000,
         checkInterval: 1000,
-        wsUrl: process.env.NODE_ENV === 'development' ? 'ws://localhost:3000/active-users' : 'wss://api.theovilain.com/active-users'
+        wsUrl: 'wss://api.theovilain.com/active-users'
     };
 
     // Empty constructor to prevent instantiation
@@ -52,11 +51,14 @@ class ActiveUserManager {
      * @public
      */
     public setup(): void {
-        console.log('[WWSNB] Initializing active users module');
+        console.log('[Flowly] Initializing active users module');
         this.initializeWebSocket();
         this.setupHeartbeat();
-        this.registerCurrentUser();
-        this.startPeriodicUpdates();
+
+        setTimeout(() => {
+            this.registerCurrentUser();
+            this.startPeriodicUpdates();
+        }, 1000);
     }
 
     /**
@@ -76,7 +78,6 @@ class ActiveUserManager {
         if (!this.ws) return;
 
         this.ws.onopen = () => {
-            console.log('[WWSNB] WebSocket connected for Active Users Module');
             this.reconnectAttempts = 0;
             this.processQueue();
             this.requestActiveUsers();
@@ -85,7 +86,6 @@ class ActiveUserManager {
         this.ws.onmessage = this.handleWebSocketMessage.bind(this);
         this.ws.onclose = () => this.handleReconnection();
         this.ws.onerror = (error) => {
-            console.error('[WWSNB] WebSocket error:', (error as ErrorEvent).message);
             this.handleReconnection();
         };
     }
@@ -111,7 +111,7 @@ class ActiveUserManager {
             this.reconnectAttempts++;
             setTimeout(() => this.initializeWebSocket(), this.config.reconnectDelay);
         } else {
-            console.error('[WWSNB] Max reconnection attempts reached');
+            console.error('[Flowly] Max reconnection attempts reached');
         }
     }
 
@@ -141,7 +141,6 @@ class ActiveUserManager {
                 username,
                 sessionId
             };
-
             this.sendMessage(message);
         }
     }
@@ -154,7 +153,6 @@ class ActiveUserManager {
     private getSessionId(): string {
         const sessionTitle = document.querySelector('[data-test="presentationTitle"]')?.textContent;
         if (!sessionTitle) {
-            console.error('[WWSNB] Session not found');
             return 'unknown-session';
         }
 
@@ -168,7 +166,7 @@ class ActiveUserManager {
             return (hash >>> 0).toString(16).slice(-8);
         };
 
-        const SALT = "WWSNB_2024";
+        const SALT = "Flowly_2024";
         return generateHash(`${SALT}${sessionTitle}`);
     }
 
@@ -182,20 +180,21 @@ class ActiveUserManager {
             const data = JSON.parse(event.data) as UserWebSocketMessage;
 
             switch (data.type) {
+                case 'userLists':
+                case 'userListsUpdate':
                 case 'activeUsers':
                     this.updateActiveUsers(data);
                     break;
                 case 'error':
-                    console.error('[WWSNB] Server error:', data.message);
-                    break;
-                case 'pong':
-                    // Do nothing
+                case 'registerUserError':
+                case 'getUserListsError':
+                    console.error('[Flowly] Server error:', data.payload?.error || data.message);
                     break;
                 default:
-                    console.warn('[WWSNB] Unknown message type:', data.type);
+                    break;
             }
         } catch (error) {
-            console.error('[WWSNB] Error handling WebSocket message:', error);
+            console.error('[Flowly] Error handling WebSocket message:', error);
         }
     }
 
@@ -206,15 +205,51 @@ class ActiveUserManager {
      */
     private updateActiveUsers(data: ActiveUsersResponse): void {
         this.activeUsers.clear();
-        data.users.forEach(username => {
-            this.activeUsers.set(username, {
-                name: username,
-                lastSeen: Date.now(),
-                sessionId: this.getSessionId()
-            });
-        });
 
-        this.githubContributors = data.githubContributors;
+        if ('payload' in data && data.payload?.data?.users) {
+            console.log('[Flowly] Processing payload.data.users:', data.payload.data.users);
+            data.payload.data.users.forEach(user => {
+                this.activeUsers.set(user.name, {
+                    name: user.name,
+                    lastSeen: user.lastSeen,
+                    sessionId: user.id
+                });
+            });
+        }
+        else if (data.data?.users) {
+            console.log('[Flowly] Processing data.users:', data.data.users);
+            data.data.users.forEach(user => {
+                this.activeUsers.set(user.name, {
+                    name: user.name,
+                    lastSeen: user.lastSeen,
+                    sessionId: user.id
+                });
+            });
+        }
+        else if (data.users) {
+            console.log('[Flowly] Processing users array:', data.users);
+            data.users.forEach(username => {
+                this.activeUsers.set(username, {
+                    name: username,
+                    lastSeen: Date.now(),
+                    sessionId: this.getSessionId()
+                });
+            });
+        }
+        else {
+            console.warn('[Flowly] No users data found in response:', data);
+        }
+
+        console.log('[Flowly] Contributeurs actuels:', this.githubContributors);
+
+        if ('payload' in data && data.payload?.data?.collaborators) {
+            console.log('[Flowly] Setting contributors from payload:', data.payload.data.collaborators);
+            this.githubContributors = data.payload.data.collaborators;
+        }
+        else if (data.githubContributors) {
+            console.log('[Flowly] Setting contributors directly:', data.githubContributors);
+            this.githubContributors = data.githubContributors;
+        }
     }
 
     /**
@@ -271,8 +306,8 @@ class ActiveUserManager {
      * @private
      */
     private requestActiveUsers(): void {
-        const message: UserMessage = {
-            type: 'getUsers',
+        const message: GetUsersMessage = {
+            type: 'getUserLists'
         };
         this.sendMessage(message);
     }
@@ -302,10 +337,12 @@ class ActiveUserManager {
         const normalizedName = this.normalizeFullName(fullName);
 
         if (this.githubContributors) {
-            for (const contributor of this.githubContributors) {
-                if (this.normalizeFullName(contributor.firstname + ' ' + contributor.name) === normalizedName) {
-                    return 'contributor';
-                }
+            const isContributor = this.githubContributors.some(contributor =>
+                this.normalizeFullName(contributor.name) === normalizedName
+            );
+
+            if (isContributor) {
+                return 'contributor';
             }
         }
 
@@ -328,16 +365,18 @@ class ActiveUserManager {
             const sessionId = this.getSessionId();
 
             if (username && sessionId) {
-                const message: UserMessage = {
-                    type: 'unregister',
-                    username,
-                    sessionId
+                const message: UnregisterUserMessage = {
+                    type: 'unregisterUser',
+                    payload: {
+                        id: sessionId,
+                        name: username
+                    }
                 };
 
                 try {
                     this.ws.send(JSON.stringify(message));
                 } catch (error) {
-                    console.error('[WWSNB] Error sending unregister message:', error);
+                    console.error('[Flowly] Error sending unregister message:', error);
                 }
             }
 
@@ -346,6 +385,10 @@ class ActiveUserManager {
 
         if (this.heartbeatInterval) {
             clearInterval(this.heartbeatInterval);
+        }
+
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
         }
     }
 }

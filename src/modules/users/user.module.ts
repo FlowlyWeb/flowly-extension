@@ -160,6 +160,10 @@ export function checkForBadge(message: HTMLElement) {
     if (usernameElement) {
         const username = usernameElement.innerText || 'unknown user';
 
+        if (usernameElement.dataset.badgeChecked === "true") {
+            return;
+        }
+
         const badge = document.createElement('img');
         badge.style.height = '12px';
         badge.style.marginLeft = '2px';
@@ -172,26 +176,26 @@ export function checkForBadge(message: HTMLElement) {
             case 'contributor':
                 if (isModerator) {
                     badge.src = 'https://i.ibb.co/6sTGv5H/wwsnb-moderator-badge.png';
-                    badge.title = 'Modérateur et Contributeur WWSNB';
+                    badge.title = 'Modérateur et Contributeur Flowly';
                     break;
                 }
                 badge.src = 'https://i.ibb.co/ZJcNFK0/wwsnb-contributor-badge.png';
-                badge.title = 'Contributeur WWSNB';
+                badge.title = 'Contributeur Flowly';
                 break;
             case 'active':
                 if (isModerator) {
                     badge.src = 'https://i.ibb.co/6sTGv5H/wwsnb-moderator-badge.png';
-                    badge.title = 'Modérateur et Utilisateur WWSNB';
+                    badge.title = 'Modérateur et Utilisateur Flowly';
                     break;
                 }
                 badge.src = 'https://i.ibb.co/LvCh2Rp/wwsnb-user-badge.png';
-                badge.title = 'Utilisateur WWSNB';
+                badge.title = 'Utilisateur Flowly';
                 break;
             default:
                 break;
         }
 
-        message.dataset.badgeChecked = "true";
+        usernameElement.dataset.badgeChecked = "true";
 
         usernameElement.insertAdjacentElement('afterend', badge);
     }
