@@ -1,11 +1,10 @@
-# WWSNB - We Want Slippers Not BBB 🛋️
+# Flowly 🌀 - Votre compagnon pour des cours en ligne fluides
 
-![ESLint Badge](https://github.com/Teyk0o/wwsnb/actions/workflows/lint.yml/badge.svg) ![WWSNB Server status](https://img.shields.io/uptimerobot/status/m798079281-2744b94467ea7e8881494d06)
+![ESLint Badge](https://github.com/Teyk0o/flowly/actions/workflows/lint.yml/badge.svg) ![Flowly Server status](https://img.shields.io/uptimerobot/status/m798079281-2744b94467ea7e8881494d06)
 
+Flowly est une extension Firefox et Chrome qui améliore votre expérience sur les plateformes de cours en ligne en ajoutant des fonctionnalités essentielles pour une communication claire et efficace.
 
-WWSNB est une extension Firefox et Chrome qui améliore l'expérience de BigBlueButton pour les cours à distance de l'école O'Clock en ajoutant des fonctionnalités essentielles pour une meilleure communication.
-
-![BBB Oclock Extension](https://github.com/user-attachments/assets/ffc63b95-eb5a-456d-ac24-a71c7ce06824)
+![Flowly Extension](https://github.com/user-attachments/assets/ffc63b95-eb5a-456d-ac24-a71c7ce06824)
 
 ## 🌟 Fonctionnalités
 
@@ -26,13 +25,6 @@ WWSNB est une extension Firefox et Chrome qui améliore l'expérience de BigBlue
 ### 👑 Messages des modérateurs
 - Messages des modérateurs surlignés en rouge pour une meilleure visibilité
 
-## 🚀 Installation
-
-1. Téléchargez la dernière version de l'extension depuis la [page des releases](https://github.com/Teyk0o/wwsnb/releases)
-2. Ouvrez Firefox et accédez à `about:debugging`
-3. Cliquez sur "Ce Firefox" puis "Charger un module temporaire"
-4. Sélectionnez le fichier manifest.json de l'extension
-
 ## 🤝 Contribution
 
 Les contributions sont les bienvenues ! Voici comment contribuer :
@@ -44,8 +36,6 @@ Les contributions sont les bienvenues ! Voici comment contribuer :
 5. Ouvrez une Pull Request
 
 Attention, merci de respecter les guidelines de contribution, sinon votre PR sera refusée.
-
-⚒️ **Serveur de développement BBB : https://bbb.theovilain.com/**
 
 ### 📋 Guidelines de contribution
 
@@ -68,22 +58,22 @@ Attention, merci de respecter les guidelines de contribution, sinon votre PR ser
 - Proposez des améliorations via les issues
 
 #### Conseils
-- Utilisez les Conventionnal Commits pour vos messages de commit : https://www.conventionalcommits.org/en/v1.0.0/
+- Utilisez les Conventional Commits pour vos messages de commit : https://www.conventionalcommits.org/en/v1.0.0/
 
-## 📝 License
+## 📝 Licence
 
-<p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/Teyk0o/wwsnb">WWSNB - We Want Slippers Not BBB</a> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://github.com/Teyk0o">Théo Vilain</a> is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-SA 4.0<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/sa.svg?ref=chooser-v1"></a></p>
+<p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/Teyk0o/flowly">Flowly</a> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://github.com/Teyk0o">Théo Vilain</a> is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-SA 4.0<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/sa.svg?ref=chooser-v1"></a></p>
 
 ## 📞 Contact
 
 Pour toute question ou suggestion, n'hésitez pas à me contacter :
-- GitHub: [@Teyk0o](https://github.com/Teyk0o)
+- GitHub : [@Teyk0o](https://github.com/Teyk0o)
 - Discord : teykofr
 - Slack : Théo Vilain
 
 ## ✨ Remerciements
 
-Un grand merci à tous les contributeurs qui aident à améliorer WWSNB !
+Un grand merci à tous les contributeurs qui aident à améliorer Flowly !
 
 ---
 
