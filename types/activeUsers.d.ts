@@ -19,24 +19,98 @@ export interface GithubContributor {
     github_username: string;
 }
 
-export interface UserMessage {
-    type: 'register' | 'unregister' | 'getUsers' | 'pong';
+export interface RegisterUserMessage {
+    type: 'registerUser';
+    payload: {
+        id: string;
+        name: string;
+    };
+}
+
+export interface UnregisterUserMessage {
+    type: 'unregisterUser';
+    payload: {
+        id: string;
+        name: string;
+    };
+}
+
+export interface GetUsersMessage {
+    type: 'getUserLists';
+}
+
+export interface HeartbeatMessage {
+    type: 'heartbeat';
     username?: string;
     sessionId?: string;
 }
 
+export interface HeartbeatResponse {
+    type: 'pong';
+}
+
 export interface ActiveUsersResponse {
-    type: 'activeUsers';
-    users: string[];
-    githubContributors: GithubContributor[];
+    type: 'userLists' | 'userListsUpdate' | 'activeUsers';
+    data?: {
+        users: Array<{
+            sessionId: string;  // Changé de 'id' à 'sessionId'
+            name: string;
+            lastSeen: number;
+        }>;
+        collaborators: Array<{
+            sessionId: string;  // Changé de 'id' à 'sessionId'
+            name: string;
+            lastSeen: number;
+        }>;
+    };
+    users?: string[];
+    githubContributors?: GithubContributor[];
+    payload?: {
+        success: boolean;
+        data: {
+            users: Array<{
+                sessionId: string;  // Changé de 'id' à 'sessionId'
+                name: string;
+                lastSeen: number;
+            }>;
+            collaborators: Array<any>;
+        };
+    };
+}
+
+export interface RegisterUserSuccessResponse {
+    type: 'registerUserSuccess';
+    payload: {
+        success: boolean;
+        user: {
+            id: string;
+            name: string;
+        };
+    };
 }
 
 export interface ErrorResponse {
-    type: 'error';
-    message: string;
+    type: 'error' | 'registerUserError' | 'getUserListsError';
+    payload?: {
+        success: false;
+        error: string;
+    };
+    message?: string;
+}
+
+export interface UserMessage {
+    type: 'register' | 'unregister' | 'getUsers';
+    username?: string;
+    sessionId?: string;
 }
 
 export type UserWebSocketMessage =
-    | UserMessage
+    | RegisterUserMessage
+    | UnregisterUserMessage
+    | GetUsersMessage
+    | HeartbeatMessage
+    | HeartbeatResponse
     | ActiveUsersResponse
-    | ErrorResponse;
+    | RegisterUserSuccessResponse
+    | ErrorResponse
+    | UserMessage;

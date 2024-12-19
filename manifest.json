@@ -1,25 +1,23 @@
 {
   "manifest_version": 2,
-  "name": "WWSNB - We Want Slippers Not BBB",
+  "name": "Flowly",
   "author": "Théo Vilain / Teyk0o",
-  "version": "1.0.1",
+  "version": "1.2.5",
   "license": "All Rights Reserved",
-  "description": "Retrieve functionality from Slippers for BBB.",
+  "description": "Where every word matters",
   "browser_specific_settings": {
     "gecko": {
-      "id": "wwsnb@theovilain.com",
-      "update_url": "https://api.theovilain.com/updates.json",
+      "id": "flowlyweb@theovilain.com",
       "strict_min_version": "112.0"
     }
   },
   "permissions": [
     "*://*.oclock.school/*",
-    "https://api.theovilain.com/*",
-    "storage"
+    "https://api.theovilain.com/*"
   ],
   "icons": {
-    "48": "icons/wwsnb-48.png",
-    "96": "icons/wwsnb-96.png"
+    "48": "icons/flowly-48.png",
+    "96": "icons/flowly-96.png"
   },
   "content_scripts": [
     {

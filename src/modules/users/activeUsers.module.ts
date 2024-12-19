@@ -1,45 +1,25 @@
-import {
+import { wsManager } from "@/managers/websocket.manager";
+import type {
     ActiveUser,
-    GithubContributor,
-    UserMessage,
     ActiveUsersResponse,
-    UserWebSocketMessage,
-    activeUserConfig
+    GithubContributor
 } from "../../../types/activeUsers";
-import { getActualUserName } from "./user.module";
 
 /**
- * ActiveUserManager class
+ * Gère le suivi des utilisateurs actifs dans une session
+ * Utilise le pattern Singleton et délègue la communication WebSocket au gestionnaire centralisé
  */
 class ActiveUserManager {
-
     private static instance: ActiveUserManager;
-    private messageQueue: UserWebSocketMessage[] = [];
-    private ws?: WebSocket;
-    private reconnectAttempts = 0;
-    private heartbeatInterval?: ReturnType<typeof setInterval>;
     private activeUsers: Map<string, ActiveUser> = new Map();
     private githubContributors: GithubContributor[] = [];
-    private readonly UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
     private updateInterval?: ReturnType<typeof setInterval>;
-    private readonly HEARTBEAT_INTERVAL = 30000;
+    private readonly UPDATE_INTERVAL = 10 * 1000; // 10 secondes
 
-    // Settings for websocket connection
-    private readonly config: activeUserConfig = {
-        maxReconnectAttempts: 5,
-        reconnectDelay: 3000,
-        checkInterval: 1000,
-        wsUrl: process.env.NODE_ENV === 'development' ? 'ws://localhost:3000/active-users' : 'wss://api.theovilain.com/active-users'
-    };
+    private constructor() {
+        this.setup();
+    }
 
-    // Empty constructor to prevent instantiation
-    private constructor() {}
-
-    /**
-     * Singleton instance getter
-     * @public
-     * @returns ActiveUserManager instance
-     */
     public static getInstance(): ActiveUserManager {
         if (!ActiveUserManager.instance) {
             ActiveUserManager.instance = new ActiveUserManager();
@@ -48,77 +28,23 @@ class ActiveUserManager {
     }
 
     /**
-     * Setup method
-     * @public
+     * Initialise le gestionnaire d'utilisateurs actifs
+     * Configure les abonnements WebSocket et démarre les mises à jour périodiques
      */
     public setup(): void {
-        console.log('[WWSNB] Initializing active users module');
-        this.initializeWebSocket();
-        this.setupHeartbeat();
-        this.registerCurrentUser();
+        console.log('[Flowly] Initializing active users module');
+
+        // S'abonne aux mises à jour des utilisateurs actifs
+        wsManager.subscribe('activeUsers', ['activeUsers', 'userLists', 'userListsUpdate', 'pong'], new Map([
+            ['activeUsers', this.updateActiveUsers.bind(this)],
+            ['userLists', this.updateActiveUsers.bind(this)],
+            ['userListsUpdate', this.updateActiveUsers.bind(this)],
+            ['pong', () => this.requestActiveUsers()]
+        ]));
+
         this.startPeriodicUpdates();
     }
 
-    /**
-     * Initialize WebSocket connection
-     * @private
-     */
-    private initializeWebSocket(): void {
-        this.ws = new WebSocket(this.config.wsUrl);
-        this.setupWebSocketHandlers();
-    }
-
-    /**
-     * Setup WebSocket event handlers
-     * @private
-     */
-    private setupWebSocketHandlers(): void {
-        if (!this.ws) return;
-
-        this.ws.onopen = () => {
-            console.log('[WWSNB] WebSocket connected for Active Users Module');
-            this.reconnectAttempts = 0;
-            this.processQueue();
-            this.requestActiveUsers();
-        };
-
-        this.ws.onmessage = this.handleWebSocketMessage.bind(this);
-        this.ws.onclose = () => this.handleReconnection();
-        this.ws.onerror = (error) => {
-            console.error('[WWSNB] WebSocket error:', (error as ErrorEvent).message);
-            this.handleReconnection();
-        };
-    }
-
-    /**
-     * Setup heartbeat interval
-     * @private
-     */
-    private setupHeartbeat(): void {
-        this.heartbeatInterval = setInterval(() => {
-            if (this.ws?.readyState === WebSocket.OPEN) {
-                this.ws.send(JSON.stringify({ type: 'heartbeat' }));
-            }
-        }, this.HEARTBEAT_INTERVAL);
-    }
-
-    /**
-     * Handle reconnection attempts
-     * @private
-     */
-    private handleReconnection(): void {
-        if (this.reconnectAttempts < this.config.maxReconnectAttempts) {
-            this.reconnectAttempts++;
-            setTimeout(() => this.initializeWebSocket(), this.config.reconnectDelay);
-        } else {
-            console.error('[WWSNB] Max reconnection attempts reached');
-        }
-    }
-
-    /**
-     * Start periodic updates for active users
-     * @private
-     */
     private startPeriodicUpdates(): void {
         this.requestActiveUsers();
 
@@ -127,188 +53,72 @@ class ActiveUserManager {
         }, this.UPDATE_INTERVAL);
     }
 
-    /**
-     * Register current user as an active user on the server
-     * @private
-     */
-    private registerCurrentUser(): void {
-        const username = getActualUserName();
-        const sessionId = this.getSessionId();
-
-        if (username && sessionId) {
-            const message: UserMessage = {
-                type: 'register',
-                username,
-                sessionId
-            };
-
-            this.sendMessage(message);
-        }
+    private requestActiveUsers(): void {
+        wsManager.send({
+            type: 'getUserLists'
+        });
     }
 
-    /**
-     * Get session ID based on the current session title
-     * @private
-     * @returns Session ID
-     */
-    private getSessionId(): string {
-        const sessionTitle = document.querySelector('[data-test="presentationTitle"]')?.textContent;
-        if (!sessionTitle) {
-            console.error('[WWSNB] Session not found');
-            return 'unknown-session';
-        }
-
-        const generateHash = (str: string): string => {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                const char = str.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash;
-            }
-            return (hash >>> 0).toString(16).slice(-8);
-        };
-
-        const SALT = "WWSNB_2024";
-        return generateHash(`${SALT}${sessionTitle}`);
-    }
-
-    /**
-     * Handle WebSocket message
-     * @param event MessageEvent
-     * @private
-     */
-    private handleWebSocketMessage(event: MessageEvent): void {
-        try {
-            const data = JSON.parse(event.data) as UserWebSocketMessage;
-
-            switch (data.type) {
-                case 'activeUsers':
-                    this.updateActiveUsers(data);
-                    break;
-                case 'error':
-                    console.error('[WWSNB] Server error:', data.message);
-                    break;
-                case 'pong':
-                    // Do nothing
-                    break;
-                default:
-                    console.warn('[WWSNB] Unknown message type:', data.type);
-            }
-        } catch (error) {
-            console.error('[WWSNB] Error handling WebSocket message:', error);
-        }
-    }
-
-    /**
-     * Update active users list
-     * @param data ActiveUsersResponse
-     * @private
-     */
     private updateActiveUsers(data: ActiveUsersResponse): void {
         this.activeUsers.clear();
-        data.users.forEach(username => {
-            this.activeUsers.set(username, {
-                name: username,
-                lastSeen: Date.now(),
-                sessionId: this.getSessionId()
+
+        if ('payload' in data && data.payload?.data?.users) {
+            data.payload.data.users.forEach(user => {
+                this.activeUsers.set(user.name, user);
             });
-        });
-
-        this.githubContributors = data.githubContributors;
-    }
-
-    /**
-     * Send message to WebSocket server
-     * @param message UserWebSocketMessage
-     * @param timeout Timeout in milliseconds
-     * @private
-     * @returns Promise
-     */
-    private async sendMessage(message: UserWebSocketMessage, timeout: number = 5000): Promise<void> {
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-            this.messageQueue.push(message);
-            return;
+        }
+        else if (data.data?.users) {
+            data.data.users.forEach(user => {
+                this.activeUsers.set(user.name, user);
+            });
+        }
+        else if (data.users) {
+            data.users.forEach(username => {
+                this.activeUsers.set(username, {
+                    name: username,
+                    lastSeen: Date.now(),
+                    sessionId: wsManager.getSessionId()
+                });
+            });
         }
 
-        return new Promise((resolve, reject) => {
-            const timeoutId = setTimeout(() => {
-                reject(new Error('WebSocket message timeout'));
-            }, timeout);
-
-            try {
-                this.ws!.send(JSON.stringify(message));
-                clearTimeout(timeoutId);
-                resolve();
-            } catch (error) {
-                clearTimeout(timeoutId);
-                reject(error);
-                this.messageQueue.push(message);
-            }
-        });
-    }
-
-    /**
-     * Process message queue
-     * @private
-     * @returns Promise
-     */
-    private async processQueue(): Promise<void> {
-        while (this.messageQueue.length > 0 && this.ws?.readyState === WebSocket.OPEN) {
-            const message = this.messageQueue.shift();
-            if (message) {
-                try {
-                    await this.sendMessage(message);
-                } catch (error) {
-                    this.messageQueue.unshift(message);
-                    break;
-                }
-            }
+        if ('payload' in data && data.payload?.data?.collaborators) {
+            this.githubContributors = data.payload.data.collaborators;
+        }
+        else if (data.githubContributors) {
+            this.githubContributors = data.githubContributors;
         }
     }
 
-    /**
-     * Request active users from the server
-     * @private
-     */
-    private requestActiveUsers(): void {
-        const message: UserMessage = {
-            type: 'getUsers',
-        };
-        this.sendMessage(message);
-    }
-
-    /**
-     * Normalize full name for comparison
-     * @param name string
-     * @returns Normalized full name
-     * @private
-     */
     private normalizeFullName(name: string): string {
-
         if (!name) return '';
 
         return name.toLowerCase()
             .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^a-z0-9]/g, '');
+            .replace(/[\u0300-\u036f]/g, "") // Supprime les accents
+            .replace(/[^a-z0-9]/g, '');      // Ne garde que les caractères alphanumériques
     }
 
     /**
-     * Get user status based on full name
-     * @param fullName string
-     * @returns User status ('active', 'contributor', 'none')
+     * Détermine le statut d'un utilisateur en vérifiant s'il est actif ou contributeur
+     * @param fullName Nom complet de l'utilisateur
+     * @returns Le statut de l'utilisateur ('active', 'contributor', ou 'none')
      */
     public getUserStatus(fullName: string): 'active' | 'contributor' | 'none' {
         const normalizedName = this.normalizeFullName(fullName);
 
+        // Vérifie d'abord si l'utilisateur est un contributeur GitHub
         if (this.githubContributors) {
-            for (const contributor of this.githubContributors) {
-                if (this.normalizeFullName(contributor.firstname + ' ' + contributor.name) === normalizedName) {
-                    return 'contributor';
-                }
+            const isContributor = this.githubContributors.some(contributor =>
+                this.normalizeFullName(contributor.name) === normalizedName
+            );
+
+            if (isContributor) {
+                return 'contributor';
             }
         }
 
+        // Vérifie ensuite si l'utilisateur est actif
         const isActive = this.activeUsers.has(fullName);
 
         if (isActive) {
@@ -319,33 +129,12 @@ class ActiveUserManager {
     }
 
     /**
-     * Cleanup method to close WebSocket connection
-     * @param isRefresh boolean
+     * Nettoie les ressources lors de la fermeture
+     * @param isRefresh Indique si le nettoyage est dû à un rafraîchissement de page
      */
     public cleanup(isRefresh: boolean = false): void {
-        if (this.ws) {
-            const username = getActualUserName();
-            const sessionId = this.getSessionId();
-
-            if (username && sessionId) {
-                const message: UserMessage = {
-                    type: 'unregister',
-                    username,
-                    sessionId
-                };
-
-                try {
-                    this.ws.send(JSON.stringify(message));
-                } catch (error) {
-                    console.error('[WWSNB] Error sending unregister message:', error);
-                }
-            }
-
-            this.ws.close(1000, isRefresh ? 'Page refresh' : 'Cleanup');
-        }
-
-        if (this.heartbeatInterval) {
-            clearInterval(this.heartbeatInterval);
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
         }
     }
 }

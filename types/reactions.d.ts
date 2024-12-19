@@ -56,4 +56,10 @@ export interface ReactionStateData {
     reactions: string;
 }
 
+export interface ReactionManagerConfig {
+    maxReconnectAttempts: number;
+    reconnectDelay: number;
+    checkInterval: number;
+}
+
 export type QueuedMessage = WebSocketMessage;
