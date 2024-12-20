@@ -19,6 +19,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             window.close();
-        }, { once: true });
+        }, {once: true});
+    }
+
+    try {
+        const manifest = browser.runtime.getManifest();
+        const versionElement = document.querySelector('.version');
+        if (versionElement) {
+            versionElement.textContent = `v${manifest.version}`;
+        }
+    } catch (error) {
+        console.error('Erreur lors de la récupération de la version:', error);
     }
 });
