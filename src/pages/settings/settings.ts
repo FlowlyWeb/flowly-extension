@@ -36,16 +36,12 @@ class SettingsManager {
 
         // Picker overlay events
         document.getElementById('pickerOverlay')?.addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                this.closeEmojiPicker();
-            }
+            e.target === e.currentTarget && this.closeEmojiPicker()
         });
 
         // Keyboard events
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.closeEmojiPicker();
-            }
+            e.key === 'Escape' && this.closeEmojiPicker();
         });
     }
 
@@ -132,9 +128,7 @@ class SettingsManager {
                 return;
             }
 
-            const updatedEmojis = [...this.currentEmojis];
-            updatedEmojis[this.selectedEmojiIndex] = emoji;
-            this.currentEmojis = updatedEmojis;
+            this.currentEmojis[this.selectedEmojiIndex] = emoji;
 
             await this.saveEmojis();
             this.renderEmojis();
