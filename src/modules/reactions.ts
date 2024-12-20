@@ -116,7 +116,7 @@ class ReactionManager {
             ];
         }
     }
-
+    
     private handleMutations(mutations: MutationRecord[]): void {
         const shouldCheck = mutations.some(mutation =>
             mutation.type === 'childList' ||
