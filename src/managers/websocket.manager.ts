@@ -27,7 +27,7 @@ class WebSocketManager {
 
     // Configuration unifiée
     private readonly config = {
-        wsUrl: 'wss://api-beta.theovilain.com/ws',
+        wsUrl: 'wss://server.flowlyweb.com/ws',
         maxReconnectAttempts: 5,
         reconnectDelay: 3000,
         heartbeatInterval: 5000,
