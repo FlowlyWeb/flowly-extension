@@ -1,6 +1,6 @@
 {
   "name": "flowly",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "type": "module",
   "description": "Retrieve functionality from Slippers for BBB.",
   "repository": "https://github.com/FlowlyWeb/flowly-extension",
@@ -50,6 +50,7 @@
     "@types/firefox-webext-browser": "^120.0.4",
     "@types/node": "^22.10.1",
     "@types/node-fetch": "^2.6.9",
+    "@types/webextension-polyfill": "^0.12.1",
     "assert": "^2.1.0",
     "buffer": "^6.0.3",
     "copy-webpack-plugin": "^12.0.2",
@@ -84,6 +85,7 @@
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
     "adm-zip": "^0.5.16",
-    "emoji-picker-element": "^1.26.0"
+    "emoji-picker-element": "^1.26.0",
+    "webextension-polyfill": "^0.12.0"
   }
 }

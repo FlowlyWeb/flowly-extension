@@ -1,17 +1,12 @@
 import { wsManager } from "@/managers/websocket.manager";
+import browser from 'webextension-polyfill';
 import {
-    AvailableReaction,
     MessageReactions,
-    ReactionConfig,
     ReactionElements, ReactionManagerConfig,
-} from '../../types/reactions.js';
+} from '../../types/reactions';
 import { forceReflow } from "../utils/chat";
-import {getActualUserName} from "@/modules/users/user.module";
+import {getActualUserName} from "./users/user.module";
 
-/**
- * Gère toutes les fonctionnalités liées aux réactions aux messages
- * Utilise le pattern Singleton et délègue la communication WebSocket au gestionnaire centralisé
- */
 class ReactionManager {
     private static instance: ReactionManager;
     private messageReactions: MessageReactions = new Map();
@@ -19,14 +14,12 @@ class ReactionManager {
     private checkInterval?: number;
     private debounceTimeout?: ReturnType<typeof setTimeout>;
 
-    // Configuration des réactions
     private readonly config: ReactionManagerConfig = {
         maxReconnectAttempts: 5,
         reconnectDelay: 3000,
         checkInterval: 1000,
     };
 
-    // Liste des réactions disponibles
     private availableReactions: string[] = [];
 
     private constructor() {
@@ -40,10 +33,6 @@ class ReactionManager {
         return ReactionManager.instance;
     }
 
-    /**
-     * Initialise le gestionnaire de réactions
-     * Configure les observations DOM et s'abonne aux mises à jour WebSocket
-     */
     public async setup(): Promise<void> {
         console.log('[Flowly] Initializing message reactions module');
 
@@ -60,7 +49,6 @@ class ReactionManager {
         this.startPeriodicCheck();
         this.checkAndAddReactionButtons();
 
-        // S'abonne aux mises à jour des réactions via le gestionnaire WebSocket
         wsManager.subscribe('reactions', ['update_reactions'], new Map([
             ['update_reactions', this.handleReactionUpdate.bind(this)]
         ]));
@@ -104,12 +92,12 @@ class ReactionManager {
     public async updateAvailableReactions(): Promise<void> {
         try {
             const { customEmojis } = await browser.storage.sync.get('customEmojis');
-            this.availableReactions = customEmojis || [
+            this.availableReactions = (customEmojis ?? [
                 '👍', '❤️', '😂', '😮', '😢', '😡',
-                '🎉', '🤔', '👀', '🔥', '✨', '👎'
-            ];
+                '🎉', '🔥', '✨', '👎'
+            ]) as string[];
         } catch (error) {
-            console.error('[Flowly] Error loading custom reactions:', error);
+            console.error('[Flowly] Error loading custom reactions, default will be used:', error);
             this.availableReactions = [
                 '👍', '❤️', '😂', '😮', '😢', '😡',
                 '🎉', '🤔', '👀', '🔥', '✨', '👎'
@@ -172,17 +160,26 @@ class ReactionManager {
     }
 
     private handleReactionUpdate(data: any): void {
+
         try {
             if (!data.data?.reactions) return;
 
             const reactionsData = JSON.parse(data.data.reactions);
-            this.messageReactions = new Map(
+            const newMessageReactions = new Map(
                 Object.entries(reactionsData).map(([messageId, reactions]) => [
                     messageId,
                     new Map(Object.entries(reactions as Record<string, string[]>))
                 ])
             );
 
+            // Remove reactions for messages that are no longer in the new data
+            this.messageReactions.forEach((_, messageId) => {
+                if (!newMessageReactions.has(messageId)) {
+                    this.removeReactionsFromMessage(messageId);
+                }
+            });
+
+            this.messageReactions = newMessageReactions;
             this.updateAllReactionDisplays();
         } catch (error) {
             console.error('[Flowly] Error updating reactions state:', error);
@@ -330,6 +327,17 @@ class ReactionManager {
         requestAnimationFrame(() => {
             forceReflow(container);
         });
+    }
+
+    private removeReactionsFromMessage(messageId: string): void {
+        const container = document.querySelector<HTMLElement>(`.sc-leYdVB[data-message-id="${messageId}"]`);
+        if (container) {
+            const reactionsWrapper = container.querySelector('.reactions-wrapper');
+            if (reactionsWrapper) {
+                reactionsWrapper.remove();
+            }
+            container.dataset.hasReactions = 'false';
+        }
     }
 
     private createReactionBadge(emoji: string, users: string[]): HTMLElement {

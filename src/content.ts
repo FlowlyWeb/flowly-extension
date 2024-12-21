@@ -1,6 +1,7 @@
 import { setupMentions } from "./modules/mentions";
 import { reactionManager } from "./modules/reactions";
 import { activeUserManager} from "./modules/users/activeUsers.module";
+import { wsManager } from "./managers/websocket.manager";
 import { checkNewMessages, observer } from "./utils/observer";
 
 /**
@@ -43,6 +44,7 @@ const app = {
         observer.disconnect();
         reactionManager.cleanup(isRefresh);
         activeUserManager.cleanup(isRefresh);
+        wsManager.cleanup();
 
         console.log('[Flowly] Cleanup completed');
     }
