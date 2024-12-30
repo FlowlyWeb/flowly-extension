@@ -1,7 +1,10 @@
 import { setupMentions } from "./modules/mentions";
 import { reactionManager } from "./modules/reactions";
 import { activeUserManager} from "./modules/users/activeUsers.module";
+import { warningManager } from "./modules/warning/warning.module";
+import { wsManager } from "./managers/websocket.manager";
 import { checkNewMessages, observer } from "./utils/observer";
+import {resetModeratorCache} from "@/modules/users/user.module";
 
 /**
  * Initialize all Flowly modules
@@ -26,6 +29,7 @@ const app = {
             setupMentions();
             reactionManager.setup();
             activeUserManager.setup();
+            warningManager.setup();
             console.log('[Flowly] Modules initialized successfully');
         }, 1000);
 
@@ -43,6 +47,10 @@ const app = {
         observer.disconnect();
         reactionManager.cleanup(isRefresh);
         activeUserManager.cleanup(isRefresh);
+        warningManager.cleanup(isRefresh);
+        wsManager.cleanup();
+
+        resetModeratorCache();
 
         console.log('[Flowly] Cleanup completed');
     }

@@ -1,7 +1,6 @@
-// Importations nécessaires pour tout le système
-import { ActiveUser, UserMessage, ActiveUsersResponse } from "../../types/activeUsers";
-import { ReactionData, WebSocketMessage, ReactionUpdateData } from "../../types/reactions";
-import { getActualUserName } from "@/modules/users/user.module";
+import { ActiveUser, ActiveUsersResponse } from "../../types/activeUsers";
+import { ReactionData } from "../../types/reactions";
+import { getActualUserName } from "../modules/users/user.module";
 
 type ModuleSubscriber = {
     messageTypes: string[];
@@ -9,8 +8,8 @@ type ModuleSubscriber = {
 };
 
 /**
- * Gestionnaire WebSocket centralisé amélioré
- * Gère toutes les communications WebSocket de l'application de manière unifiée
+ * WebSocketManager
+ * Handles the WebSocket connection and communication
  */
 class WebSocketManager {
     private static instance: WebSocketManager;
@@ -25,9 +24,8 @@ class WebSocketManager {
     private reactions: Map<string, Map<string, string[]>> = new Map();
     private githubContributors: any[] = [];
 
-    // Configuration unifiée
     private readonly config = {
-        wsUrl: 'wss://server.flowlyweb.com/ws',
+        wsUrl: 'wss://ws.flowlyweb.com/',
         maxReconnectAttempts: 5,
         reconnectDelay: 3000,
         heartbeatInterval: 5000,
@@ -47,7 +45,7 @@ class WebSocketManager {
     }
 
     /**
-     * Initialise le système WebSocket avec toutes ses composantes
+     * Initialization of the WebSocket manager
      */
     private initialize(): void {
         this.initializeWebSocket();
@@ -56,7 +54,7 @@ class WebSocketManager {
     }
 
     /**
-     * Initialise la connexion WebSocket avec gestion complète des événements
+     * Initialization of the WebSocket connection
      */
     private initializeWebSocket(): void {
         if (this.ws?.readyState === WebSocket.OPEN ||
@@ -85,26 +83,17 @@ class WebSocketManager {
     }
 
     /**
-     * Gère la logique de reconnexion en cas de perte de connexion
-     * Utilise une stratégie de backoff exponentiel pour éviter de surcharger le serveur
+     * Handles the reconnection strategy
+     * Uses exponential backoff to reconnect
      */
     private handleReconnection(): void {
-        // Vérifie qu'on n'a pas dépassé le nombre maximum de tentatives
+
         if (this.reconnectAttempts < this.config.maxReconnectAttempts) {
             this.reconnectAttempts++;
 
-            // Calcul du délai avec backoff exponentiel
             const delay = this.config.reconnectDelay * Math.pow(1.5, this.reconnectAttempts - 1);
 
-            console.log(
-                `[WebSocketManager] Attempting to reconnect `+
-                `(${this.reconnectAttempts}/${this.config.maxReconnectAttempts}) `+
-                `in ${delay}ms`
-            );
-
-            // Programme la tentative de reconnexion
             setTimeout(() => {
-                // Vérifie que la connexion n'a pas été rétablie entre temps
                 if (this.ws?.readyState !== WebSocket.OPEN) {
                     this.initializeWebSocket();
                 }
@@ -118,9 +107,10 @@ class WebSocketManager {
     }
 
     /**
-     * Gère la réception et la distribution des messages
+     * Handles incoming messages from the WebSocket
      */
     private handleMessage(event: MessageEvent): void {
+
         try {
             const data = JSON.parse(event.data);
 
@@ -136,12 +126,14 @@ class WebSocketManager {
                 case 'pong':
                     this.handlePong();
                     break;
+                case 'warning':
+                    this.handleWarningMessage(data);
+                    break;
                 case 'error':
                     console.error('[WebSocketManager] Server error:', data.message);
                     break;
             }
 
-            // Distribution aux abonnés
             this.subscribers.forEach(subscriber => {
                 if (subscriber.messageTypes.includes(data.type)) {
                     const handler = subscriber.handlers.get(data.type);
@@ -155,7 +147,7 @@ class WebSocketManager {
     }
 
     /**
-     * Configuration du heartbeat et nettoyage périodique
+     * Heartbeat configuration
      */
     private setupHeartbeat(): void {
         if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
@@ -175,7 +167,7 @@ class WebSocketManager {
     }
 
     /**
-     * Configuration du nettoyage périodique des ressources
+     * Cleanup interval configuration
      */
     private setupCleanupInterval(): void {
         if (this.cleanupInterval) clearInterval(this.cleanupInterval);
@@ -199,9 +191,9 @@ class WebSocketManager {
     }
 
     /**
-     * Gestion de l'enregistrement initial
+     * Handles the registration message
      */
-    private sendRegisterMessage(): void {
+    private sendRegisterMessage(retryCount = 0): void {
         if (this.isRegistered) return;
 
         const username = getActualUserName();
@@ -215,13 +207,54 @@ class WebSocketManager {
             });
             this.isRegistered = true;
 
-            // Demande initiale des listes
             this.requestActiveUsers();
+            this.requestReactions();
+        } else if (retryCount < 10) {
+            setTimeout(() => this.sendRegisterMessage(retryCount + 1), 1000);
         }
     }
 
     /**
-     * Gestion des mises à jour de réactions
+     * Ask for reactions
+     */
+    private requestReactions(): void {
+        this.send({ type: 'getReactions' });
+    }
+
+    /**
+     * Handles incoming warning messages
+     */
+    private handleWarningMessage(data: any): void {
+
+        const warningSubscribers = Array.from(this.subscribers.values())
+            .filter(sub => sub.messageTypes.includes('warning'))
+            .map(sub => sub.handlers.get('warning'))
+            .filter(Boolean);
+
+        warningSubscribers.forEach(handler => handler?.(data));
+    }
+
+    /**
+     * Send a warning through WebSocket
+     * @param sessionId Session identifier
+     * @param userId User identifier
+     * @param problemType Type of problem
+     */
+    public sendWarning(sessionId: string, userId: string, problemType: string): void {
+        const message = {
+            type: 'warning',
+            sessionToken: sessionId,
+            data: {
+                userId,
+                problemType,
+                timestamp: Date.now()
+            }
+        };
+        this.send(message);
+    }
+
+    /**
+     * Handles the reaction update
      */
     private handleReactionUpdate(data: ReactionData): void {
         try {
@@ -232,13 +265,14 @@ class WebSocketManager {
                     new Map(Object.entries(reactions as Record<string, string[]>))
                 ]
             ));
+
         } catch (error) {
             console.error('[WebSocketManager] Error updating reactions:', error);
         }
     }
 
     /**
-     * Gestion des mises à jour des utilisateurs actifs
+     * Handles the active users update
      */
     private handleActiveUsersUpdate(data: ActiveUsersResponse): void {
         this.activeUsers.clear();
@@ -261,14 +295,14 @@ class WebSocketManager {
     }
 
     /**
-     * Gestion du pong serveur
+     * Handles the pong message
      */
     private handlePong(): void {
         this.requestActiveUsers();
     }
 
     /**
-     * Interface publique pour l'ajout de réactions
+     * Public interface to add a reaction
      */
     public addReaction(messageId: string, emoji: string): void {
         const username = getActualUserName();
@@ -290,7 +324,7 @@ class WebSocketManager {
     }
 
     /**
-     * Détermine l'action de réaction (ajout ou suppression)
+     * Determines the action to take for a reaction
      */
     private getReactionAction(messageId: string, emoji: string, userId: string): 'add' | 'remove' {
         const messageReactions = this.reactions.get(messageId);
@@ -299,14 +333,14 @@ class WebSocketManager {
     }
 
     /**
-     * Demande la liste des utilisateurs actifs
+     * Ask for active users
      */
     private requestActiveUsers(): void {
         this.send({ type: 'getUserLists' });
     }
 
     /**
-     * Notifie les abonnés des changements d'utilisateurs actifs
+     * Notify active users update
      */
     private notifyActiveUsersUpdate(): void {
         const subscribers = this.subscribers.get('activeUsers');
@@ -321,21 +355,14 @@ class WebSocketManager {
     }
 
     /**
-     * Inscription d'un module aux événements
+     * Module subscription
      */
     public subscribe(moduleId: string, messageTypes: string[], handlers: Map<string, (data: any) => void>): void {
         this.subscribers.set(moduleId, { messageTypes, handlers });
     }
 
     /**
-     * Désinscription d'un module
-     */
-    public unsubscribe(moduleId: string): void {
-        this.subscribers.delete(moduleId);
-    }
-
-    /**
-     * Envoi sécurisé de messages
+     * Send a message through the WebSocket
      */
     public send(message: any): void {
         if (this.ws?.readyState === WebSocket.OPEN) {
@@ -347,7 +374,7 @@ class WebSocketManager {
     }
 
     /**
-     * Gestion de la file d'attente des messages
+     * Process the message queue
      */
     private processQueue(): void {
         while (this.messageQueue.length > 0 && this.ws?.readyState === WebSocket.OPEN) {
@@ -357,7 +384,7 @@ class WebSocketManager {
     }
 
     /**
-     * Obtention de l'ID de session
+     * Get the session ID
      */
     getSessionId(): string {
         const sessionTitle = document.querySelector('[data-test="presentationTitle"]')?.textContent;
@@ -377,7 +404,7 @@ class WebSocketManager {
     }
 
     /**
-     * Nettoyage des ressources
+     * Cleanup the WebSocket connection
      */
     public cleanup(isRefresh: boolean = false): void {
         const username = getActualUserName();
@@ -406,5 +433,4 @@ class WebSocketManager {
     }
 }
 
-// Export de l'instance unique
 export const wsManager = WebSocketManager.getInstance();

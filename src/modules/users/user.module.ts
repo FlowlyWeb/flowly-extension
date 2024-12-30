@@ -3,6 +3,7 @@ import { activeUserManager } from '../users/activeUsers.module'
 
 const CACHE_DURATION = 3000;
 let cachedUsername: string | undefined;
+let cachedIsModerator: boolean | undefined;
 
 /**
  * Get cached users or fetch new ones if cache is expired
@@ -44,7 +45,6 @@ export function getAllUsers(): User[] {
  */
 export function getUsersFromUserListItem(): User[] {
     const users = [];
-    // Get users from the user list
     const userListItemElem = document.querySelectorAll('[data-test="userListItem"]') as unknown as HTMLElement[];
     for (const item of userListItemElem) {
         const userNameElement = item.querySelector('[aria-label*="Statut"]');
@@ -71,7 +71,6 @@ export function getUsersFromUserListItem(): User[] {
 export function getUserFromDataMessageID(): User[]{
     const users: User[] = [];
     const dataMessageID = document.querySelectorAll('[data-message-id]') as unknown as HTMLElement[];
-    // Get users from chat messages
     for (const message of dataMessageID) {
         const userNameElement = message.querySelector('.sc-gFkHhu span');
         if (userNameElement?.textContent) {
@@ -136,14 +135,13 @@ export function cleanUsername(name:string):string {
  * @returns {undefined} If the username is not found
  */
 export function getActualUserName(): string | undefined {
-    // Si on a déjà trouvé le username, on le retourne
     if (cachedUsername) {
         return cachedUsername;
     }
 
     const userElement = document.querySelector('[aria-label*="Vous"]');
     if (!userElement) {
-        console.debug('[Flowly] Could not find username element'); // Changé en debug au lieu d'error
+        console.debug('[Flowly] Could not find username element');
         return undefined;
     }
 
@@ -159,9 +157,29 @@ export function getActualUserName(): string | undefined {
         return undefined;
     }
 
-    // On met en cache le username trouvé
     cachedUsername = cleanUsername(fullNameMatch[1].trim());
     return cachedUsername;
+}
+
+/**
+ * Check if the current user is a moderator
+ * @returns {boolean} True if the user is a moderator, false otherwise
+ */
+export function isCurrentUserModerator(): boolean {
+    if (cachedIsModerator !== undefined) {
+        return cachedIsModerator;
+    }
+
+    const currentUserElement = document.querySelector('[data-test="userListItemCurrent"]');
+    if (!currentUserElement) {
+        console.debug('[Flowly] Could not find current user element');
+        return false;
+    }
+
+    const moderatorAvatar = currentUserElement.querySelector('[data-test="moderatorAvatar"]');
+
+    cachedIsModerator = !!moderatorAvatar;
+    return cachedIsModerator;
 }
 
 /**
@@ -225,4 +243,11 @@ export function checkIfModerator(message: HTMLElement): boolean {
 
     const moderatorAvatar = parent.querySelector('[data-test="moderatorAvatar"]');
     return !!moderatorAvatar;
+}
+
+/**
+ * Reset the cached username
+ */
+export function resetModeratorCache(): void {
+    cachedIsModerator = undefined;
 }
