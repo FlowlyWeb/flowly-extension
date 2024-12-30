@@ -114,8 +114,6 @@ class WebSocketManager {
         try {
             const data = JSON.parse(event.data);
 
-            console.log('[WebSocketManager] Server response:', data);
-
             switch (data.type) {
                 case 'update_reactions':
                     this.handleReactionUpdate(data);
@@ -127,6 +125,9 @@ class WebSocketManager {
                     break;
                 case 'pong':
                     this.handlePong();
+                    break;
+                case 'warning':
+                    this.handleWarningMessage(data);
                     break;
                 case 'error':
                     console.error('[WebSocketManager] Server error:', data.message);
@@ -217,8 +218,39 @@ class WebSocketManager {
      * Ask for reactions
      */
     private requestReactions(): void {
-        console.log('[WebSocketManager] Requesting reactions');
         this.send({ type: 'getReactions' });
+    }
+
+    /**
+     * Handles incoming warning messages
+     */
+    private handleWarningMessage(data: any): void {
+
+        const warningSubscribers = Array.from(this.subscribers.values())
+            .filter(sub => sub.messageTypes.includes('warning'))
+            .map(sub => sub.handlers.get('warning'))
+            .filter(Boolean);
+
+        warningSubscribers.forEach(handler => handler?.(data));
+    }
+
+    /**
+     * Send a warning through WebSocket
+     * @param sessionId Session identifier
+     * @param userId User identifier
+     * @param problemType Type of problem
+     */
+    public sendWarning(sessionId: string, userId: string, problemType: string): void {
+        const message = {
+            type: 'warning',
+            sessionToken: sessionId,
+            data: {
+                userId,
+                problemType,
+                timestamp: Date.now()
+            }
+        };
+        this.send(message);
     }
 
     /**
@@ -288,8 +320,6 @@ class WebSocketManager {
             }
         };
 
-        console.log('[WebSocketManager] Sending reaction:', message);
-
         this.send(message);
     }
 
@@ -299,7 +329,6 @@ class WebSocketManager {
     private getReactionAction(messageId: string, emoji: string, userId: string): 'add' | 'remove' {
         const messageReactions = this.reactions.get(messageId);
         const users = messageReactions?.get(emoji) || [];
-        console.log(users.includes(userId) ? 'remove' : 'add')
         return users.includes(userId) ? 'remove' : 'add';
     }
 

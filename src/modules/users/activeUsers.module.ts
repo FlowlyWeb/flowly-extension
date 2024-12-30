@@ -6,15 +6,14 @@ import type {
 } from "../../../types/activeUsers";
 
 /**
- * Gère le suivi des utilisateurs actifs dans une session
- * Utilise le pattern Singleton et délègue la communication WebSocket au gestionnaire centralisé
+ * Handles active user management
  */
 class ActiveUserManager {
     private static instance: ActiveUserManager;
     private activeUsers: Map<string, ActiveUser> = new Map();
     private githubContributors: GithubContributor[] = [];
     private updateInterval?: ReturnType<typeof setInterval>;
-    private readonly UPDATE_INTERVAL = 10 * 1000; // 10 secondes
+    private readonly UPDATE_INTERVAL = 10 * 1000; // 10 seconds
 
     private constructor() {
         this.setup();
@@ -28,13 +27,11 @@ class ActiveUserManager {
     }
 
     /**
-     * Initialise le gestionnaire d'utilisateurs actifs
-     * Configure les abonnements WebSocket et démarre les mises à jour périodiques
+     * Init the active user manager
      */
     public setup(): void {
         console.log('[Flowly] Initializing active users module');
 
-        // S'abonne aux mises à jour des utilisateurs actifs
         wsManager.subscribe('activeUsers', ['activeUsers', 'userLists', 'userListsUpdate', 'pong'], new Map([
             ['activeUsers', this.updateActiveUsers.bind(this)],
             ['userLists', this.updateActiveUsers.bind(this)],
@@ -45,6 +42,10 @@ class ActiveUserManager {
         this.startPeriodicUpdates();
     }
 
+    /**
+     * Start periodic updates to get active users
+     * @private
+     */
     private startPeriodicUpdates(): void {
         this.requestActiveUsers();
 
@@ -53,12 +54,21 @@ class ActiveUserManager {
         }, this.UPDATE_INTERVAL);
     }
 
+    /**
+     * Request active users from the server
+     * @private
+     */
     private requestActiveUsers(): void {
         wsManager.send({
             type: 'getUserLists'
         });
     }
 
+    /**
+     * Update the active users list
+     * @param data
+     * @private
+     */
     private updateActiveUsers(data: ActiveUsersResponse): void {
         this.activeUsers.clear();
 
@@ -90,24 +100,27 @@ class ActiveUserManager {
         }
     }
 
+    /**
+     * Normalize the full name of a user
+     * @param name
+     * @private
+     */
     private normalizeFullName(name: string): string {
         if (!name) return '';
 
         return name.toLowerCase()
             .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "") // Supprime les accents
-            .replace(/[^a-z0-9]/g, '');      // Ne garde que les caractères alphanumériques
+            .replace(/[\u0300-\u036f]/g, "") // Delete accents
+            .replace(/[^a-z0-9]/g, '');      // Only keep alphanumeric characters
     }
 
     /**
-     * Détermine le statut d'un utilisateur en vérifiant s'il est actif ou contributeur
-     * @param fullName Nom complet de l'utilisateur
-     * @returns Le statut de l'utilisateur ('active', 'contributor', ou 'none')
+     * Get the status of a user
+     * @param fullName
      */
     public getUserStatus(fullName: string): 'active' | 'contributor' | 'none' {
         const normalizedName = this.normalizeFullName(fullName);
 
-        // Vérifie d'abord si l'utilisateur est un contributeur GitHub
         if (this.githubContributors) {
             const isContributor = this.githubContributors.some(contributor =>
                 this.normalizeFullName(contributor.name) === normalizedName
@@ -118,7 +131,6 @@ class ActiveUserManager {
             }
         }
 
-        // Vérifie ensuite si l'utilisateur est actif
         const isActive = this.activeUsers.has(fullName);
 
         if (isActive) {
@@ -129,8 +141,8 @@ class ActiveUserManager {
     }
 
     /**
-     * Nettoie les ressources lors de la fermeture
-     * @param isRefresh Indique si le nettoyage est dû à un rafraîchissement de page
+     * Cleanup the active user manager
+     * @param isRefresh
      */
     public cleanup(isRefresh: boolean = false): void {
         if (this.updateInterval) {
