@@ -2,6 +2,7 @@ import { checkForMentions } from "../modules/mentions/mention.module";
 import { checkForModeratorMessages } from "../modules/moderators/moderator.module";
 import { checkForQuestions } from "../modules/question/question.module";
 import { checkForBadge } from "../modules/users/user.module";
+import {detachableManager} from "@/modules/detachable/detachable.module";
 
 /**
  * Create a new MutationObserver
@@ -36,6 +37,10 @@ export function checkNewMessages() {
     if (message.dataset.badgeChecked !== "true") {
         // Check for badges
         checkForBadge(message);
+    }
+
+    if (detachableManager.isChatDetached()) {
+        detachableManager.processNewMessage(message);
     }
 
   }

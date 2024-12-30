@@ -33,7 +33,7 @@ class WarningManager {
             ['warning', this.handleWarningMessage.bind(this)]
         ]));
 
-        console.log('[Flowly] Warning module initialized');
+        console.log('[Flowly] Warning Button module initialized');
     }
 
     /**
