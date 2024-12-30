@@ -1,79 +1,88 @@
-# Flowly 🌀 - Votre compagnon pour des cours en ligne fluides
+# Flowly 🌀 - Your companion for smooth online courses
 
-![ESLint Badge](https://github.com/Teyk0o/flowly/actions/workflows/lint.yml/badge.svg) ![Flowly Server status](https://img.shields.io/uptimerobot/status/m798079281-2744b94467ea7e8881494d06)
+![Uptime Robot status](https://img.shields.io/uptimerobot/status/m798233679-cbb1425eb9c82930618c0e2f?up_message=Websocket%20UP&down_message=Websocket%20DOWN) ![Uptime Robot status](https://img.shields.io/uptimerobot/status/m798171391-49878f73c732e469bee6f6fb?up_message=Website%20UP&down_message=Website%20DOWN)
 
-Flowly est une extension Firefox et Chrome qui améliore votre expérience sur les plateformes de cours en ligne en ajoutant des fonctionnalités essentielles pour une communication claire et efficace.
+Flowly is a Firefox and Chrome extension that enhances your experience on online learning platforms by adding essential features for clear and efficient communication.
 
 ![Flowly Extension](https://github.com/user-attachments/assets/ffc63b95-eb5a-456d-ac24-a71c7ce06824)
 
-## 🌟 Fonctionnalités
+## 🌟 Features
 
-### 🎯 Questions
-- Mettez en évidence vos questions en utilisant `@question`
-- Les messages contenant `@question` seront automatiquement surlignés en orange
+### Highlighting Important Messages
+- Student questions are highlighted using `@question` for easy instructor response
+- Moderator messages are highlighted for quick student identification
+- Mentions of your name are highlighted so you don't miss relevant messages
 
-### 👋 Mentions
-- Mentionnez d'autres participants avec `@` suivi de leur nom
-- Suggestions automatiques lors de la saisie
-- Messages de mention surlignés en bleu pour le destinataire
+### Reactions
+- React to messages with emojis to show approval, disagreement, or attention
+- Customize reactions with custom emojis to add fun to your messages
+- Reactions are visible to all participants to encourage interaction
 
-### 👀 Réactions
-- Réagissez aux messages avec des émojis
-- Les réactions sont synchronisées entre tous les utilisateurs
-- Voir qui a réagi en survolant les réactions
+### Badges
+- Badges help quickly identify moderators, instructors, and students using the extension
+- Contributors are highlighted to thank them for active participation
 
-### 👑 Messages des modérateurs
-- Messages des modérateurs surlignés en rouge pour une meilleure visibilité
+### Technical Issue Report Button
+- Report technical issues like sound, video, or connection problems for quick instructor resolution
+- Reports are received only by moderators to prevent abuse and come with a message and sound alert
 
-## 🤝 Contribution
+### Detachable Chat
+- Detach chat to place anywhere on your screen for better visibility
+- Customize chat size to suit your needs
+- Detachable chat syncs with main chat to avoid missing messages
+- One-click access for quick and efficient use
+- Note: detachable chat is currently read-only
+- Not all Flowly features are available in detachable chat yet
 
-Les contributions sont les bienvenues ! Voici comment contribuer :
+## 🤝 Contributing
 
-1. Forkez le projet
-2. Créez une nouvelle branche (`git checkout -b feature/ma-fonctionnalite`)
-3. Committez vos changements (`git commit -m 'feat: Ma fonctionnalité'`)
-4. Pushez sur la branche (`git push origin feature/ma-fonctionnalite`)
-5. Ouvrez une Pull Request
+Contributions welcome! Here's how:
 
-Attention, merci de respecter les guidelines de contribution, sinon votre PR sera refusée.
+1. Fork the project
+2. Create new branch (`git checkout -b feature/my-feature`)
+3. Commit changes (`git commit -m 'feat: My feature'`)
+4. Push branch (`git push origin feature/my-feature`)
+5. Open Pull Request
 
-### 📋 Guidelines de contribution
+Please follow contribution guidelines, or your PR will be rejected.
 
-#### Style de code
-- Utilisez des noms de variables et fonctions explicites
-- Commentez votre code en anglais
-- Nommez vos variables en anglais
-- Suivez la structure modulaire existante
-- Testez vos modifications avant de soumettre une PR
+### 📋 Contribution Guidelines
 
-#### Process de Pull Request
-- Décrivez clairement les modifications apportées
-- Incluez des captures d'écran si nécessaire
-- Mettez à jour la documentation si nécessaire
-- Assurez-vous que votre code est propre et bien commenté
+#### Code Style
+- Use explicit variable and function names
+- Comment in English
+- Name variables in English
+- Follow existing modular structure
+- Test modifications before PR submission
 
-#### Bugs et suggestions
-- Utilisez les issues GitHub pour signaler des bugs
-- Incluez autant de détails que possible
-- Proposez des améliorations via les issues
+#### Pull Request Process
+- Clearly describe modifications
+- Include screenshots if needed
+- Update documentation if needed
+- Ensure clean, well-commented code
 
-#### Conseils
-- Utilisez les Conventional Commits pour vos messages de commit : https://www.conventionalcommits.org/en/v1.0.0/
+#### Bugs and Suggestions
+- Use GitHub issues for bug reports
+- Include maximum details
+- Propose improvements via issues
 
-## 📝 Licence
+#### Tips
+- Use Conventional Commits: https://www.conventionalcommits.org/en/v1.0.0/
 
-<p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/Teyk0o/flowly">Flowly</a> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://github.com/Teyk0o">Théo Vilain</a> is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-SA 4.0<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/sa.svg?ref=chooser-v1"></a></p>
+## 📝 License
+
+<p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/FlowlyWeb/flowly-extension">Flowly</a> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://github.com/Teyk0o">Théo Vilain</a> is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-SA 4.0<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/sa.svg?ref=chooser-v1"></a></p>
 
 ## 📞 Contact
 
-Pour toute question ou suggestion, n'hésitez pas à me contacter :
-- GitHub : [@Teyk0o](https://github.com/Teyk0o)
-- Discord : teykofr
-- Slack : Théo Vilain
+For questions or suggestions:
+- GitHub: [@Teyk0o](https://github.com/Teyk0o)
+- Discord: teykofr
+- Slack: Théo Vilain
 
-## ✨ Remerciements
+## ✨ Acknowledgments
 
-Un grand merci à tous les contributeurs qui aident à améliorer Flowly !
+Thanks to all contributors helping improve Flowly!
 
 ---
 
