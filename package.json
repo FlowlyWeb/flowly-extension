@@ -1,6 +1,6 @@
 {
   "name": "flowly",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "type": "module",
   "description": "Retrieve functionality from Slippers for BBB.",
   "repository": "https://github.com/FlowlyWeb/flowly-extension",
@@ -28,6 +28,7 @@
     "release:both": "node --experimental-vm-modules dist-scripts/release.js patch --browser=both",
     "release:both:no-git": "node --experimental-vm-modules dist-scripts/release.js patch --no-git --browser=both",
     "release:both:minor:no-git": "node --experimental-vm-modules dist-scripts/release.js minor --no-git --browser=both",
+    "release:both:patch:no-git": "node --experimental-vm-modules dist-scripts/release.js patch --no-git --browser=both",
     "release:chrome:minor:no-git": "node --experimental-vm-modules dist-scripts/release.js minor --no-git --browser=chrome",
     "dev": "webpack --watch --mode=development",
     "start": "web-ext run --source-dir ./dist/",

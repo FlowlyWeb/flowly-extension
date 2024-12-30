@@ -185,6 +185,7 @@ export class DetachableManager {
     private chatWindow: Window | null = null;
     private processedMessageIds: Set<string> = new Set();
     private detachButton: HTMLButtonElement | null = null;
+    private windowCheckInterval: number | null = null;
 
     setup() {
         this.cleanup();
@@ -201,7 +202,21 @@ export class DetachableManager {
         window.addEventListener('message', this.handleWindowMessage.bind(this));
         window.addEventListener('unload', () => this.cleanup());
 
+        this.startWindowCheck();
+
         console.log('[Flowly] Detachable chat module initialized');
+    }
+
+    /**
+     * Start the window check interval
+     * @private
+     */
+    private startWindowCheck() {
+        this.windowCheckInterval = window.setInterval(() => {
+            if (this.chatWindow && this.chatWindow.closed) {
+                this.cleanup();
+            }
+        }, 1000);
     }
 
     /**
@@ -292,8 +307,17 @@ export class DetachableManager {
      * Cleanup the detached window
      */
     cleanup() {
-        this.chatWindow?.close();
+        if (this.windowCheckInterval) {
+            clearInterval(this.windowCheckInterval);
+            this.windowCheckInterval = null;
+        }
+
+        if (this.chatWindow && !this.chatWindow.closed) {
+            this.chatWindow.close();
+        }
+
         this.chatWindow = null;
+
         if (this.detachButton) {
             this.updateButtonState(this.detachButton);
         }
