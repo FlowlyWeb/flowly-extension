@@ -43,7 +43,8 @@ class WarningManager {
      */
     private getWarningKey(problemType: string): string {
         const timeWindow = Math.floor(Date.now() / this.WARNING_COOLDOWN);
-        return `${problemType}-${timeWindow}`;
+        const sessionId = wsManager.getSessionId();
+        return `${problemType}-${timeWindow}-${sessionId}`;
     }
 
     /**
@@ -61,14 +62,15 @@ class WarningManager {
             }
 
             const users = this.warningCounts.get(warningKey)!;
-            const isNewWarning = !users.has(userId);
             users.add(userId);
 
-            if (isNewWarning) {
-                this.showModeratorAlert(problemType, users, timestamp);
+            const existingAlert = document.querySelector(`.sc-warning-alert[data-problem-type="${problemType}"]`);
+            if (existingAlert) {
+                this.updateExistingAlert(problemType, users.size);
                 this.playNotificationSound();
             } else {
-                this.updateExistingAlert(problemType, users.size);
+                this.showModeratorAlert(problemType, users, timestamp);
+                this.playNotificationSound();
             }
         }
     }
@@ -146,6 +148,8 @@ class WarningManager {
                 </div>
             </div>
         `;
+
+        alertContainer.setAttribute('data-problem-type', problemType);
 
         const resolveButton = alertContainer.querySelector('.sc-warning-alert-resolve');
         const laterButton = alertContainer.querySelector('.sc-warning-alert-later');
