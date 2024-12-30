@@ -327,15 +327,13 @@ async function main() {
         }
 
         if (['both', 'firefox'].includes(options.browser)) {
-            const xpiPath = await signExtension();
-            await uploadFirefoxExtension(xpiPath, newVersion);
+            await signExtension();
             console.log(chalk.green('✅ Firefox upload completed'));
         }
 
         if (['both', 'chrome'].includes(options.browser)) {
             const zipPath = await packageChromeExtension();
-            await uploadChromeExtension(zipPath);
-            console.log(chalk.green('✅ Chrome upload completed'));
+            console.log(chalk.green('✅ Chrome package ready to be uploaded'));
         }
 
         if (!options.skipGit && !options.uploadOnly) {
