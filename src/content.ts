@@ -5,6 +5,7 @@ import { warningManager } from "./modules/warning/warning.module";
 import { wsManager } from "./managers/websocket.manager";
 import { checkNewMessages, observer } from "./utils/observer";
 import {resetModeratorCache} from "@/modules/users/user.module";
+import {detachableManager} from "@/modules/detachable/detachable.module";
 
 /**
  * Initialize all Flowly modules
@@ -30,6 +31,7 @@ const app = {
             reactionManager.setup();
             activeUserManager.setup();
             warningManager.setup();
+            detachableManager.setup();
             console.log('[Flowly] Modules initialized successfully');
         }, 1000);
 
@@ -48,7 +50,8 @@ const app = {
         reactionManager.cleanup(isRefresh);
         activeUserManager.cleanup(isRefresh);
         warningManager.cleanup(isRefresh);
-        wsManager.cleanup();
+        wsManager.cleanup(isRefresh);
+        detachableManager.cleanup();
 
         resetModeratorCache();
 
