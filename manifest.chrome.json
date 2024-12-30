@@ -12,6 +12,9 @@
   "permissions": [
     "storage"
   ],
+  "permissions": [
+    "storage"
+  ],
   "icons": {
     "48": "flowly-48.png",
     "96": "flowly-96.png"

@@ -19,7 +19,6 @@ class ReactionManager {
         reconnectDelay: 3000,
         checkInterval: 1000,
     };
-
     private availableReactions: string[] = [];
 
     private constructor() {
