@@ -6,6 +6,7 @@ import { wsManager } from "./managers/websocket.manager";
 import { checkNewMessages, observer } from "./utils/observer";
 import {resetModeratorCache} from "@/modules/users/user.module";
 import {detachableManager} from "@/modules/detachable/detachable.module";
+import { createMenuAdvancedQuestion } from "@/modules/question/advanced.module";
 
 /**
  * Initialize all Flowly modules
@@ -28,6 +29,7 @@ const app = {
             console.log('[Flowly] Starting modules initialization');
             checkNewMessages();
             setupMentions();
+            createMenuAdvancedQuestion()
             reactionManager.setup();
             activeUserManager.setup();
             warningManager.setup();
