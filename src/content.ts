@@ -18,6 +18,14 @@ const app = {
     },
 
     init: ()=> {
+
+        const presentationTitle = document.querySelector('[data-test="presentationTitle"]');
+        if (presentationTitle && presentationTitle.hasAttribute('data-flowly')) {
+            console.log('[Flowly] Flowly integration detected, deactivation of the web extension');
+            return;
+        }
+
+
         console.log('Flowly by Théo Vilain successfully loaded');
 
         // Start observing document for changes
