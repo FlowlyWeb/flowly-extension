@@ -15,7 +15,8 @@
     "storage",
     "*://*.oclock.school/*",
     "https://api.theovilain.com/*",
-    "*://*.lutice.online/*"
+    "*://*.lutice.online/*",
+    "https://tenor.googleapis.com/*"
   ],
   "icons": {
     "48": "flowly-48.png",

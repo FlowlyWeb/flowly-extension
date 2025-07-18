@@ -6,6 +6,7 @@ import { wsManager } from "./managers/websocket.manager";
 import { checkNewMessages, observer } from "./utils/observer";
 import {resetModeratorCache} from "@/modules/users/user.module";
 import {detachableManager} from "@/modules/detachable/detachable.module";
+import { gifManager } from "./modules/gif/gif.module";
 
 /**
  * Initialize all Flowly modules
@@ -40,6 +41,7 @@ const app = {
             activeUserManager.setup();
             warningManager.setup();
             detachableManager.setup();
+            gifManager.setup();
             console.log('[Flowly] Modules initialized successfully');
         }, 1000);
 
@@ -60,6 +62,7 @@ const app = {
         warningManager.cleanup(isRefresh);
         wsManager.cleanup(isRefresh);
         detachableManager.cleanup();
+        gifManager.cleanup();
 
         resetModeratorCache();
 

@@ -191,6 +191,9 @@ export class DetachableManager {
         this.cleanup();
         this.detachButton = this.createDetachButton();
         const header = document.querySelector('[data-test="chatTitle"]') as HTMLElement;
+        if (!header) {
+            return;
+        }
         const container = header.querySelector('div.sc-gtLQVN.iySlus') as HTMLElement;
 
         container.style.display = 'flex';

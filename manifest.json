@@ -13,7 +13,8 @@
   },
   "permissions": [
     "*://*.oclock.school/*",
-    "https://api.theovilain.com/*"
+    "https://api.theovilain.com/*",
+    "https://tenor.googleapis.com/*"
   ],
   "icons": {
     "48": "icons/flowly-48.png",
