@@ -377,3 +377,4 @@ web-ext-artifacts/
 .vscode
 /dist-scripts/
 package-lock.json
+/.idea/
