@@ -203,9 +203,21 @@ export class GifManager {
             return;
         }
 
+        // Build the message text
+        let messageText = '';
+        
+        // Add the attached text if provided
+        if (gif.attachedText && gif.attachedText.trim()) {
+            messageText = gif.attachedText.trim();
+        }
+        
+        // Add the GIF URL
+        const gifUrl = gif.url;
+        messageText = messageText ? `${messageText} ${gifUrl}` : gifUrl;
+
         // Use the same method as mentions to properly trigger BBB's event system
         const currentValue = messageInput.value;
-        const newText = currentValue + (currentValue ? ' ' : '') + gif.url;
+        const newText = currentValue + (currentValue ? ' ' : '') + messageText;
 
         // Select the input and use execCommand to insert text (like mentions do)
         messageInput.select();
@@ -244,13 +256,23 @@ export class GifManager {
     }
 
     private convertMessageToGifPreview(messageElement: Element, gifUrl: string): void {
+        const originalText = messageElement.textContent || '';
+        
+        // Extract text that isn't the GIF URL
+        const textWithoutGif = originalText.replace(gifUrl, '').trim();
 
         // Create GIF preview element
         const gifPreview = document.createElement('div');
         gifPreview.className = 'gif-message-preview';
-        gifPreview.innerHTML = `
-            <img src="${gifUrl}" alt="GIF" class="gif-message-image" loading="lazy">
-        `;
+        
+        // Include text if there's any
+        let previewHTML = '';
+        if (textWithoutGif) {
+            previewHTML += `<div class="gif-message-text">${textWithoutGif}</div>`;
+        }
+        previewHTML += `<img src="${gifUrl}" alt="GIF" class="gif-message-image" loading="lazy">`;
+        
+        gifPreview.innerHTML = previewHTML;
 
         // Style the preview
         gifPreview.style.cssText = `
@@ -262,6 +284,19 @@ export class GifManager {
             background: white;
         `;
 
+        // Style the text if present
+        const textDiv = gifPreview.querySelector('.gif-message-text') as HTMLElement;
+        if (textDiv) {
+            textDiv.style.cssText = `
+                padding: 12px;
+                background: #f8f9fa;
+                font-size: 14px;
+                line-height: 1.4;
+                color: #333;
+                word-wrap: break-word;
+            `;
+        }
+
         const gifImage = gifPreview.querySelector('.gif-message-image') as HTMLImageElement;
         if (gifImage) {
             gifImage.style.cssText = `
@@ -270,7 +305,7 @@ export class GifManager {
                 display: block;
                 max-height: 200px;
                 object-fit: cover;
-                border-radius: 8px;
+                ${textWithoutGif ? '' : 'border-radius: 8px;'}
             `;
         }
 

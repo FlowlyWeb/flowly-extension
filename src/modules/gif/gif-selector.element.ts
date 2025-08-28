@@ -8,6 +8,7 @@ export class GifSelectorElement {
     private loadingIndicator!: HTMLElement;
     private previewContainer!: HTMLElement;
     private gifService: GifService;
+    private selectedGif: GifResult | null = null;
     private currentGifs: GifResult[] = [];
     private onGifSelect: (gif: GifResult) => void;
     private onClose: () => void;
@@ -67,6 +68,28 @@ export class GifSelectorElement {
                         <span>Loading GIFs...</span>
                     </div>
                 </div>
+                <div class="gif-preview-container" style="display: none;">
+                    <div class="gif-preview-header">
+                        <h3>Add a message with your GIF</h3>
+                        <button class="gif-preview-back" aria-label="Back">
+                            <svg width="16" height="16" viewBox="0 0 16 16">
+                                <path d="M8 1l-1.5 1.5L11 7H1v2h10l-4.5 4.5L8 15l7-7-7-7z" transform="rotate(180 8 8)"/>
+                            </svg>
+                            Back
+                        </button>
+                    </div>
+                    <div class="gif-preview-content">
+                        <div class="gif-preview-image">
+                            <!-- Selected GIF will be shown here -->
+                        </div>
+                        <div class="gif-preview-text">
+                            <textarea class="gif-text-input" placeholder="Add a message (optional)" maxlength="280"></textarea>
+                            <div class="gif-preview-actions">
+                                <button class="gif-send-button">Send GIF</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
 
@@ -74,6 +97,7 @@ export class GifSelectorElement {
         this.gifGrid = this.container.querySelector('.gif-grid') as HTMLElement;
         this.categoriesContainer = this.container.querySelector('.gif-categories') as HTMLElement;
         this.loadingIndicator = this.container.querySelector('.gif-loading') as HTMLElement;
+        this.previewContainer = this.container.querySelector('.gif-preview-container') as HTMLElement;
 
         this.createCategories();
         this.hideLoading();
@@ -121,6 +145,14 @@ export class GifSelectorElement {
         this.container.addEventListener('click', (e) => {
             e.stopPropagation();
         });
+
+        // Preview back button
+        const backButton = this.container.querySelector('.gif-preview-back');
+        backButton?.addEventListener('click', () => this.hidePreview());
+
+        // Send GIF button
+        const sendButton = this.container.querySelector('.gif-send-button');
+        sendButton?.addEventListener('click', () => this.sendGifWithText());
     }
 
     private handleSearch(query: string): void {
@@ -204,7 +236,7 @@ export class GifSelectorElement {
 
             // Add click handler
             gifElement.addEventListener('click', () => {
-                this.onGifSelect(gif);
+                this.showGifPreview(gif);
             });
 
             // Add hover effect
@@ -263,6 +295,69 @@ export class GifSelectorElement {
 
     public getElement(): HTMLElement {
         return this.container;
+    }
+
+    private showGifPreview(gif: GifResult): void {
+        this.selectedGif = gif;
+        
+        // Hide the main content and header elements
+        const mainContent = this.container.querySelector('.gif-content') as HTMLElement;
+        const categories = this.container.querySelector('.gif-categories') as HTMLElement;
+        const header = this.container.querySelector('.gif-selector-header') as HTMLElement;
+        
+        mainContent.style.display = 'none';
+        categories.style.display = 'none';
+        header.style.display = 'none';
+        
+        // Show preview
+        this.previewContainer.style.display = 'block';
+        
+        // Set the GIF image
+        const previewImage = this.previewContainer.querySelector('.gif-preview-image') as HTMLElement;
+        previewImage.innerHTML = `
+            <img src="${gif.url}" alt="${gif.title}" class="gif-preview-img">
+            <div class="gif-preview-title">${gif.title}</div>
+        `;
+        
+        // Focus on the text input
+        const textInput = this.previewContainer.querySelector('.gif-text-input') as HTMLTextAreaElement;
+        textInput.focus();
+    }
+
+    private hidePreview(): void {
+        // Show the main content and header elements
+        const mainContent = this.container.querySelector('.gif-content') as HTMLElement;
+        const categories = this.container.querySelector('.gif-categories') as HTMLElement;
+        const header = this.container.querySelector('.gif-selector-header') as HTMLElement;
+        
+        mainContent.style.display = 'block';
+        categories.style.display = 'block';
+        header.style.display = 'block';
+        
+        // Hide preview
+        this.previewContainer.style.display = 'none';
+        
+        // Clear selected GIF
+        this.selectedGif = null;
+        
+        // Clear text input
+        const textInput = this.previewContainer.querySelector('.gif-text-input') as HTMLTextAreaElement;
+        textInput.value = '';
+    }
+
+    private sendGifWithText(): void {
+        if (!this.selectedGif) return;
+        
+        const textInput = this.previewContainer.querySelector('.gif-text-input') as HTMLTextAreaElement;
+        const text = textInput.value.trim();
+        
+        // Create a combined result with text and GIF
+        const gifWithText = {
+            ...this.selectedGif,
+            attachedText: text
+        };
+        
+        this.onGifSelect(gifWithText);
     }
 
     public destroy(): void {

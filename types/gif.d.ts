@@ -6,6 +6,7 @@ interface GifResult {
     tags: string[];
     width: number;
     height: number;
+    attachedText?: string;
 }
 
 interface GifSearchResponse {

@@ -652,7 +652,6 @@
 .gif-selector-body {
     display: flex;
     flex-direction: column;
-    height: calc(100% - 88px);
 }
 
 .gif-categories {
@@ -828,7 +827,6 @@
 
 /* GIF Preview Styles */
 .gif-preview-container {
-    margin-top: 8px;
     border-radius: 8px;
     overflow: hidden;
     position: relative;
@@ -892,6 +890,118 @@
     background: rgba(255, 255, 255, 0.3);
 }
 
+/* GIF Preview with Text Styles */
+.gif-preview-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.gif-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #e9ecef;
+    background: #f8f9fa;
+}
+
+.gif-preview-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.gif-preview-back {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    padding: 6px 12px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.gif-preview-back:hover {
+    background-color: #e9ecef;
+}
+
+.gif-preview-content {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.gif-preview-image {
+    text-align: center;
+}
+
+.gif-preview-img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.gif-preview-title {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+.gif-text-input {
+    width: 100%;
+    min-height: 80px;
+    max-height: 120px;
+    padding: 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.4;
+    resize: vertical;
+    transition: border-color 0.2s;
+}
+
+.gif-text-input:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+.gif-text-input::placeholder {
+    color: #999;
+}
+
+.gif-preview-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.gif-send-button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.gif-send-button:hover {
+    background: #0056b3;
+}
+
 /* Mobile Responsiveness */
 @media screen and (max-width: 768px) {
     .gif-selector {
@@ -917,5 +1027,13 @@
     .gif-category {
         padding: 4px 8px;
         font-size: 11px;
+    }
+    
+    .gif-preview-content {
+        padding: 16px;
+    }
+    
+    .gif-preview-header {
+        padding: 12px 16px;
     }
 }
