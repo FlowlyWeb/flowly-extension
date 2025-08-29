@@ -113,6 +113,7 @@ class WebSocketManager {
 
         try {
             const data = JSON.parse(event.data);
+            console.log('[WebSocketManager] Received message:', data);
 
             switch (data.type) {
                 case 'update_reactions':
@@ -134,10 +135,16 @@ class WebSocketManager {
                     break;
             }
 
-            this.subscribers.forEach(subscriber => {
+            console.log('[WebSocketManager] Notifying subscribers, total:', this.subscribers.size);
+            this.subscribers.forEach((subscriber, key) => {
+                console.log('[WebSocketManager] Checking subscriber:', key, 'for message type:', data.type, 'subscriber messageTypes:', subscriber.messageTypes);
                 if (subscriber.messageTypes.includes(data.type)) {
                     const handler = subscriber.handlers.get(data.type);
-                    if (handler) handler(data);
+                    console.log('[WebSocketManager] Found handler for', data.type, 'in subscriber:', key);
+                    if (handler) {
+                        console.log('[WebSocketManager] Calling handler for', data.type);
+                        handler(data);
+                    }
                 }
             });
 
@@ -251,6 +258,29 @@ class WebSocketManager {
             }
         };
         this.send(message);
+    }
+
+    public sendPause(sessionId: string, userId: string, duration: number, reason?: string): void {
+        const endTime = new Date(Date.now() + duration * 60000);
+        const message = {
+            type: 'pause',
+            sessionToken: sessionId,
+            data: {
+                userId,
+                duration,
+                reason,
+                startTime: Date.now(),
+                endTime: endTime.getTime(),
+                endTimeFormatted: endTime.toLocaleTimeString('fr-FR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                })
+            }
+        };
+        
+        console.log('[WebSocketManager] Sending pause message:', message);
+        this.send(message);
+        console.log('[WebSocketManager] Pause message sent via WebSocket');
     }
 
     /**

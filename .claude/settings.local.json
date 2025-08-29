@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/mnt/d/Job/flowly/flowly-websocket/**)",
+      "Read(/mnt/d/Job/flowly/flowly-websocket/src/websocket/**)",
+      "Read(/mnt/d/Job/flowly/flowly-websocket/src/websocket/handlers/**)",
+      "Read(/mnt/d/Job/flowly/flowly-websocket/src/types/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

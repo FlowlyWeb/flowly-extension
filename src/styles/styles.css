@@ -1037,3 +1037,591 @@
         padding: 12px 16px;
     }
 }
+
+/* Pause Module Styles */
+.sc-pause-container {
+    display: inline-flex;
+}
+
+.sc-pause-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10001;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sc-pause-modal.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.sc-pause-modal.closing {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.sc-pause-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    cursor: pointer;
+}
+
+.sc-pause-modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+    width: 90%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.sc-pause-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.sc-pause-modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+}
+
+.sc-pause-modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    padding: 6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.sc-pause-modal-close:hover {
+    background-color: #f0f0f0;
+}
+
+.sc-pause-modal-body {
+    padding: 24px;
+}
+
+.sc-pause-duration-section {
+    margin-bottom: 24px;
+}
+
+.sc-pause-reason-section {
+    margin-bottom: 8px;
+}
+
+.sc-pause-label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.sc-pause-duration-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.sc-pause-duration-option {
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.sc-pause-duration-option:hover {
+    border-color: #007bff;
+    background: #f8f9ff;
+}
+
+.sc-pause-duration-option.selected {
+    border-color: #007bff;
+    background: #007bff;
+    color: white;
+}
+
+.sc-pause-custom-duration {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.sc-pause-custom-input {
+    padding: 8px 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 14px;
+    width: 80px;
+    text-align: center;
+}
+
+.sc-pause-custom-input:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+.sc-pause-reason-input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.4;
+    resize: vertical;
+    transition: border-color 0.2s;
+}
+
+.sc-pause-reason-input:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+.sc-pause-reason-input::placeholder {
+    color: #999;
+}
+
+.sc-pause-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 20px 24px;
+    border-top: 1px solid #e9ecef;
+}
+
+.sc-pause-cancel-btn,
+.sc-pause-confirm-btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.sc-pause-cancel-btn {
+    background: #f8f9fa;
+    color: #666;
+    border: 1px solid #e9ecef;
+}
+
+.sc-pause-cancel-btn:hover {
+    background: #e9ecef;
+}
+
+.sc-pause-confirm-btn {
+    background: #28a745;
+    color: white;
+}
+
+.sc-pause-confirm-btn:hover:not(:disabled) {
+    background: #218838;
+}
+
+.sc-pause-confirm-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.sc-pause-confirmation {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 10002;
+    animation: slideInUp 0.3s ease;
+}
+
+
+@keyframes slideInDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Pause Notification Styles */
+.sc-pause-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10003;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    max-width: 400px;
+    width: 350px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(100%);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #3b82f6;
+}
+
+.sc-pause-notification.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+}
+
+.sc-pause-notification.closing {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(100%);
+}
+
+.sc-pause-notification-content {
+    padding: 16px 20px;
+}
+
+.sc-pause-notification-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.sc-pause-notification-status-indicator {
+    width: 8px;
+    height: 8px;
+    background: #3b82f6;
+    border-radius: 50%;
+    flex-shrink: 0;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.sc-pause-notification-title {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.sc-pause-notification-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #9ca3af;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.sc-pause-notification-close:hover {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.sc-pause-notification-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sc-pause-notification-time {
+    font-size: 14px;
+    color: #374151;
+    font-weight: 500;
+}
+
+.sc-pause-notification-duration {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.sc-pause-notification-reason {
+    font-size: 13px;
+    color: #374151;
+    background: #f9fafb;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-top: 4px;
+    border-left: 3px solid #d1d5db;
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Mobile Responsiveness for Pause Modal */
+@media screen and (max-width: 768px) {
+    .sc-pause-modal-content {
+        width: 95%;
+        margin: 20px;
+        max-height: 85vh;
+    }
+
+    .sc-pause-duration-options {
+        grid-template-columns: 1fr;
+    }
+
+    .sc-pause-modal-header,
+    .sc-pause-modal-footer {
+        padding: 16px 20px;
+    }
+
+    .sc-pause-modal-body {
+        padding: 20px;
+    }
+
+    .sc-pause-confirmation {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        text-align: center;
+    }
+
+    .sc-pause-notification {
+        top: 10px;
+        right: 10px;
+        width: calc(100vw - 20px);
+        max-width: 350px;
+    }
+
+    .sc-pause-end-notification {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+    }
+}
+
+/* Coffee Rain Animation */
+@keyframes coffeeRainFall {
+    0% {
+        transform: translateY(-50px) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.coffee-emoji-rain {
+    animation: none !important;
+}
+
+/* Pause Control Buttons */
+.sc-pause-notification-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+}
+
+.sc-pause-stop-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex: 1;
+}
+
+.sc-pause-stop-btn:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
+.sc-pause-extend-btn {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex: 1;
+}
+
+.sc-pause-extend-btn:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+/* Extend Pause Modal */
+.sc-pause-extend-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10004;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sc-pause-extend-modal.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.sc-pause-extend-modal.closing {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.sc-pause-extend-options {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.sc-pause-extend-option {
+    flex: 1;
+    padding: 10px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.sc-pause-extend-option:hover {
+    border-color: #28a745;
+    background: #f8fff8;
+    color: #28a745;
+}
+
+/* Pause End Notification */
+.sc-pause-end-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10005;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    padding: 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(100%);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border: 1px solid #e5e7eb;
+}
+
+.sc-pause-end-notification.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.sc-pause-end-notification.closing {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(100%);
+}
+
+.sc-pause-end-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+}
+
+.sc-pause-end-content.success {
+    border-left: 4px solid #10b981;
+}
+
+.sc-pause-end-content.stopped {
+    border-left: 4px solid #f59e0b;
+}
+
+.sc-pause-end-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.sc-pause-end-content.success .sc-pause-end-status {
+    background: #10b981;
+}
+
+.sc-pause-end-content.stopped .sc-pause-end-status {
+    background: #f59e0b;
+}
+
+.sc-pause-end-message {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}

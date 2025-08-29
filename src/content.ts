@@ -2,6 +2,7 @@ import { setupMentions } from "./modules/mentions";
 import { reactionManager } from "./modules/reactions";
 import { activeUserManager} from "./modules/users/activeUsers.module";
 import { warningManager } from "./modules/warning/warning.module";
+import { pauseManager } from "./modules/pause/pause.module";
 import { wsManager } from "./managers/websocket.manager";
 import { checkNewMessages, observer } from "./utils/observer";
 import {resetModeratorCache} from "@/modules/users/user.module";
@@ -40,6 +41,7 @@ const app = {
             reactionManager.setup();
             activeUserManager.setup();
             warningManager.setup();
+            pauseManager.setup();
             detachableManager.setup();
             gifManager.setup();
             console.log('[Flowly] Modules initialized successfully');
@@ -60,6 +62,7 @@ const app = {
         reactionManager.cleanup(isRefresh);
         activeUserManager.cleanup(isRefresh);
         warningManager.cleanup(isRefresh);
+        pauseManager.cleanup(isRefresh);
         wsManager.cleanup(isRefresh);
         detachableManager.cleanup();
         gifManager.cleanup();
