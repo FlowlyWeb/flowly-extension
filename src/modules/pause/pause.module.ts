@@ -183,8 +183,7 @@ class PauseManager {
                             class="sc-pause-reason-input" 
                             placeholder="Ex: Pause technique, pause déjeuner..." 
                             maxlength="200"
-                            rows="3">
-                        </textarea>
+                            rows="3"></textarea>
                     </div>
                 </div>
                 <div class="sc-pause-modal-footer">
