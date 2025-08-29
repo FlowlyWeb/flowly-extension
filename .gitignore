@@ -378,3 +378,4 @@ web-ext-artifacts/
 /dist-scripts/
 package-lock.json
 /.idea/
+.claude
