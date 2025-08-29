@@ -331,7 +331,7 @@ export class GifSelectorElement {
         const header = this.container.querySelector('.gif-selector-header') as HTMLElement;
         
         mainContent.style.display = 'block';
-        categories.style.display = 'block';
+        categories.style.display = 'flex';
         header.style.display = 'block';
         
         // Hide preview
